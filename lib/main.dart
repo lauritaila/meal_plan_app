@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:meal_plan_app/config/config.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
@@ -9,7 +10,7 @@ void main() async{
     url: Enviroment.supabaseUrl,
     anonKey: Enviroment.supabaseKey,
   );
-  runApp(const MyApp());
+  runApp(ProviderScope(child: const MyApp()));
 }
 
 class MyApp extends StatelessWidget {
