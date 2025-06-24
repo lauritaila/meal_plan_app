@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   static ThemeData lightTheme () {
@@ -9,6 +10,9 @@ class AppTheme {
       ),
       useMaterial3: true,
       scaffoldBackgroundColor: Color(0xFFFAF5EC),
+      textTheme: GoogleFonts.sourceSans3TextTheme(),
+      // textTheme: GoogleFonts.libreBaskervilleTextTheme(),
+
     );
   }
 }
