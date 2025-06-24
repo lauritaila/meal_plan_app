@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:meal_plan_app/config/config.dart';
 
 void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
   await Enviroment.initEnv();
+  await Supabase.initialize(
+    url: Enviroment.supabaseUrl,
+    anonKey: Enviroment.supabaseKey,
+  );
   runApp(const MyApp());
 }
 
