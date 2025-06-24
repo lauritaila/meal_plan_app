@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:meal_plan_app/config/config.dart';
 
-void main() {
+void main() async{
+  await Enviroment.initEnv();
   runApp(const MyApp());
 }
 
