@@ -1,13 +1,10 @@
-// lib/features/auth/presentation/providers/auth_state.dart
+import 'package:meal_plan_app/features/auth/domain/domain.dart'; 
 
-import 'package:meal_plan_app/features/auth/domain/domain.dart'; // Tu entidad UserProfile
-
-// Clase base abstracta para el estado de autenticación
 abstract class AuthState {
-  const AuthState(); // Constructor constante
+  const AuthState(); 
 }
 
-// 1. Estado inicial
+// 1. init state
 class InitialAuthState extends AuthState {
   const InitialAuthState();
 
@@ -15,7 +12,7 @@ class InitialAuthState extends AuthState {
   String toString() => 'InitialAuthState';
 }
 
-// 2. Estado de carga
+// 2. loading state
 class LoadingAuthState extends AuthState {
   const LoadingAuthState();
 
@@ -23,7 +20,7 @@ class LoadingAuthState extends AuthState {
   String toString() => 'LoadingAuthState';
 }
 
-// 3. Estado autenticado
+// 3. authenticated state
 class AuthenticatedAuthState extends AuthState {
   final UserProfile user;
   const AuthenticatedAuthState(this.user);
@@ -31,13 +28,13 @@ class AuthenticatedAuthState extends AuthState {
   @override
   String toString() => 'AuthenticatedAuthState(user: $user)';
 
-  // Opcional: Si necesitas copiar este estado con un usuario diferente
+  // Optional: for if you need to copy with a different user
   AuthenticatedAuthState copyWith({UserProfile? user}) {
     return AuthenticatedAuthState(user ?? this.user);
   }
 }
 
-// 4. Estado no autenticado
+// 4. No authenticated state
 class UnauthenticatedAuthState extends AuthState {
   const UnauthenticatedAuthState();
 
@@ -45,7 +42,7 @@ class UnauthenticatedAuthState extends AuthState {
   String toString() => 'UnauthenticatedAuthState';
 }
 
-// 5. Estado de error
+// 5. Error state
 class ErrorAuthState extends AuthState {
   final String message;
   const ErrorAuthState(this.message);
@@ -53,13 +50,13 @@ class ErrorAuthState extends AuthState {
   @override
   String toString() => 'ErrorAuthState(message: $message)';
 
-  // Opcional: Si necesitas copiar este estado con un mensaje diferente
+  // Optional: for if you need to copy with a different user
   ErrorAuthState copyWith({String? message}) {
     return ErrorAuthState(message ?? this.message);
   }
 }
 
-// 6. Estado de mensaje (temporal para SnackBar)
+// 6. Message state
 class MessageAuthState extends AuthState {
   final String message;
   const MessageAuthState(this.message);
@@ -67,7 +64,7 @@ class MessageAuthState extends AuthState {
   @override
   String toString() => 'MessageAuthState(message: $message)';
 
-  // Opcional: Si necesitas copiar este estado con un mensaje diferente
+  // Optional: for if you need to copy with a different user
   MessageAuthState copyWith({String? message}) {
     return MessageAuthState(message ?? this.message);
   }

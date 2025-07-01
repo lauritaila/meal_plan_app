@@ -31,27 +31,21 @@ class _LoginForm extends ConsumerWidget {
     final loginFormState = ref.watch(loginFormProvider);
     final loginFormNotifier = ref.read(loginFormProvider.notifier);
 
-    // ESCUCHANDO ERRORES DEL AUTHPROVIDER (¡AQUÍ ESTÁ EL CAMBIO PRINCIPAL!)
     ref.listen(authProvider, (previous, next) {
-      if (next is ErrorAuthState) { // <--- Usamos 'is' para verificar el tipo
-        showSnackbar(context, next.message); // Accedemos directamente a 'message'
-      } else if (next is MessageAuthState) { // <--- Usamos 'is' para verificar el tipo
-        showSnackbar(context, next.message); // Accedemos directamente a 'message'
+      if (next is ErrorAuthState) { 
+        showSnackbar(context, next.message); 
+      } else if (next is MessageAuthState) { 
+        showSnackbar(context, next.message); 
       }
-      // No hacemos nada para otros tipos de estado (InitialAuthState, LoadingAuthState, etc.)
     });
 
-    final textStyles = Theme.of(context).textTheme;
 
     return Padding(
-      // ... (el resto del código del build method es el mismo) ...
       padding: const EdgeInsets.symmetric(horizontal: 50),
       child: Column(
-        // ... (otros widgets) ...
         children: [
-          // ... (text fields, buttons, etc.) ...
 CustomTextFormField(
-            label: 'Correo',
+            label: 'Email',
             keyboardType: TextInputType.emailAddress,
             onChanged: loginFormNotifier.onEmailChanged,
             errorMessage: loginFormState.isFormPosted
@@ -60,7 +54,7 @@ CustomTextFormField(
           ),
           const SizedBox(height: 30),
           CustomTextFormField(
-            label: 'Contraseña',
+            label: 'Password',
             obscureText: true,
             onChanged: loginFormNotifier.onPasswordChanged,
             onFieldSubmitted: (_) => loginFormNotifier.onFormSubmitted(),
@@ -84,10 +78,11 @@ CustomTextFormField(
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text('¿No tienes cuenta?'),
+              const Text('Don\'t have an account?'),
+              SizedBox(width: 5),
               TextButton(
                 onPressed: () => context.push('/register'),
-                child: const Text('Crea una aquí'),
+                child: const Text('Register'),
               ),
             ],
           ),

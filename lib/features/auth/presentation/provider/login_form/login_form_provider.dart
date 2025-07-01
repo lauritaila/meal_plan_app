@@ -77,8 +77,6 @@ class LoginForm extends _$LoginForm {
     _touchEveryField(); 
 
     if (!state.isValid) {
-      // Opcional: mostrar un mensaje de error si el formulario no es válido
-      // ref.read(authProvider.notifier).showSnackbar('Por favor, corrige los errores del formulario.');
       return;
     }
 
@@ -96,14 +94,12 @@ class LoginForm extends _$LoginForm {
       state = state.copyWith(isPosting: false);
     }
   }
-
-  // Método auxiliar para "tocar" cada campo (marcarlo como modificado)
   void _touchEveryField() {
     final email = Email.dirty(state.email.value);
     final password = Password.dirty(state.password.value);
 
     state = state.copyWith(
-      isFormPosted: true, // Indica que el formulario ha sido intentado enviar
+      isFormPosted: true,
       email: email,
       password: password,
       isValid: Formz.validate([email, password]),
