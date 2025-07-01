@@ -7,4 +7,5 @@ abstract class AuthDatasource {
   Future<void> logOut();
   Future<UserProfile> resetPassword(String email);
   Future<bool> resendVerificationEmail(String email);
+  Future<UserProfile> getAuthenticatedUserProfile();
 }
