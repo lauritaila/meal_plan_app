@@ -35,5 +35,21 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<bool> resendVerificationEmail(String email) {
     return datasource.resendVerificationEmail(email);
   }
-  
+
+  @override
+  Future<UserProfile> getAuthenticatedUserProfile() async {
+    final isAuthenticated = await datasource.isAuthenticated();
+    if (isAuthenticated) {
+      try {
+        return await datasource.getAuthenticatedUserProfile();
+      } catch (e) {
+        await datasource.logOut(); 
+        throw Exception('User profile not found');
+      }
+    }
+    throw Exception('No authenticated');
+  }
+
 }
+  
+
