@@ -1,9 +1,8 @@
+import 'package:meal_plan_app/config/errors/app_errors.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../domain/domain.dart';
 import '../infrastructure.dart';
-
-//TODO: IMPLEMENT BETTER ERROR MESSAGE 
 
 class SupabaseDatasourceImpl implements AuthDatasource {
    final SupabaseClient _supabaseClient;
@@ -26,13 +25,24 @@ class SupabaseDatasourceImpl implements AuthDatasource {
 
       final User? supabaseAuthUser = res.user;
       if (supabaseAuthUser == null) {
-        throw Exception('Login failed: Could not get user. Please try again.');
+        throw AuthAppError('Login failed: Could not get user from Supabase.');
       }
       return _loadUserProfile(supabaseAuthUser.id, supabaseAuthUser.email);
     } on AuthException catch (e) {
-      throw Exception('Authentication error: ${e.message}');
+      if (e.statusCode == '400' && e.message.contains('Invalid login credentials')) {
+        throw const AuthAppError.invalidCredentials();
+      }
+      if (e.message.contains('Email not confirmed')) { 
+        throw const AuthAppError.emailNotVerified();
+      }
+      if (e.message.contains('User not found')) {
+        throw const AuthAppError.userNotFound();
+      }
+      throw AuthAppError(e.message, code: e.statusCode); 
+    } on PostgrestException catch (e) { 
+      throw DataAppError(e.message, code: e.code);
     } catch (e) {
-      throw Exception('Login failed unexpectedly: $e');
+      throw NetworkAppError('Network or unexpected error: ${e.toString()}'); // Usamos NetworkAppError
     }
   }
 
@@ -46,7 +56,7 @@ class SupabaseDatasourceImpl implements AuthDatasource {
 
       final User? supabaseAuthUser = res.user;
       if (supabaseAuthUser == null) {
-        throw Exception('Sign up failed: Could not get user from Supabase. Please try again.');
+        throw AuthAppError('Sign up failed: Could not get user from Supabase.');
       }
       await _supabaseClient.from('user_profiles').insert({
         'id': supabaseAuthUser.id, 
@@ -69,9 +79,14 @@ class SupabaseDatasourceImpl implements AuthDatasource {
 
       return _loadUserProfile(supabaseAuthUser.id, supabaseAuthUser.email);
     } on AuthException catch (e) {
-      throw Exception('Registration error: ${e.message}');
+      if (e.statusCode == '400' && e.message.contains('User already registered')) {
+        throw const AuthAppError.emailAlreadyInUse();
+      }
+      throw AuthAppError(e.message, code: e.statusCode);
+    } on PostgrestException catch (e) {
+      throw DataAppError(e.message, code: e.code);
     } catch (e) {
-      throw Exception('Sign up failed unexpectedly: $e');
+      throw NetworkAppError('Network or unexpected error during sign up: ${e.toString()}');
     }
   }
 
@@ -79,10 +94,10 @@ class SupabaseDatasourceImpl implements AuthDatasource {
   Future<void> logOut() async {
     try {
       await _supabaseClient.auth.signOut();
-    } on AuthException catch (e) {
-      throw Exception('Logout error: ${e.message}');
+} on AuthException catch (e) {
+      throw AuthAppError(e.message, code: e.statusCode);
     } catch (e) {
-      throw Exception('Logout failed unexpectedly: $e');
+      throw AuthAppError('Unexpected error during logout: ${e.toString()}'); 
     }
   }
 
@@ -95,10 +110,10 @@ class SupabaseDatasourceImpl implements AuthDatasource {
       );
 
       return UserProfile(id: "", email: email);
-    } on AuthException catch (e) {
-      throw Exception('Password reset request error: ${e.message}');
+} on AuthException catch (e) {
+      throw AuthAppError(e.message, code: e.statusCode);
     } catch (e) {
-      throw Exception('Password reset request failed unexpectedly: $e');
+      throw AuthAppError.passwordResetFailed(); // Más específico aquí
     }
   }
 
@@ -112,9 +127,9 @@ class SupabaseDatasourceImpl implements AuthDatasource {
 
       return true;
     } on AuthException catch (e) {
-      throw Exception('Resend verification email error: ${e.message}');
+      throw AuthAppError(e.message, code: e.statusCode);
     } catch (e) {
-      throw Exception('Resend verification email failed unexpectedly: $e');
+      throw AuthAppError.resendVerificationFailed(); // Más específico aquí
     }
   }
 
@@ -131,8 +146,10 @@ class SupabaseDatasourceImpl implements AuthDatasource {
           .single();
 
     return UserMapper.fromJson({...response, 'email': email});
+ } on PostgrestException catch (e) { // Captura errores de la base de datos Supabase
+      throw DataAppError(e.message, code: e.code);
     } catch (e) {
-      throw Exception('Failed to load user profile: $e');
+      throw AuthAppError('An unexpected error occurred while loading profile: ${e.toString()}');
     }
   }
 
@@ -140,7 +157,7 @@ class SupabaseDatasourceImpl implements AuthDatasource {
   Future<UserProfile> getAuthenticatedUserProfile() async {
     final supabaseUser = _supabaseClient.auth.currentUser;
     if (supabaseUser == null || supabaseUser.email == null) {
-      throw Exception('There is not a user');
+      throw const PermissionAppError.unauthorized();
     }
     return _loadUserProfile(supabaseUser.id, supabaseUser.email);
   }

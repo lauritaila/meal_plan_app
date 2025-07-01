@@ -1,3 +1,5 @@
+import 'package:meal_plan_app/config/errors/app_errors.dart';
+
 import '../../domain/domain.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
@@ -44,7 +46,7 @@ class AuthRepositoryImpl implements AuthRepository {
         return await datasource.getAuthenticatedUserProfile();
       } catch (e) {
         await datasource.logOut(); 
-        throw Exception('User profile not found');
+        throw AuthAppError('Failed to check auth status: ${e.toString()}');
       }
     }
     throw Exception('No authenticated');

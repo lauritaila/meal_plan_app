@@ -1,5 +1,6 @@
 // lib/features/auth/presentation/providers/auth_provider.dart
 
+import 'package:meal_plan_app/config/errors/app_errors.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 import 'package:meal_plan_app/features/auth/domain/domain.dart';
@@ -9,7 +10,7 @@ part 'auth_provider.g.dart';
 @riverpod
 class Auth extends _$Auth {
   late final AuthRepository _authRepository;
-  String? _snackbarMessage;
+  String? snackbarMessage;
 
   @override
   AuthState build() {
@@ -25,11 +26,11 @@ class Auth extends _$Auth {
           if (session != null) {
             _checkAuthStatus();
           } else {
-            state = const UnauthenticatedAuthState(); // <--- CAMBIADO
+            state = const UnauthenticatedAuthState(); 
           }
           break;
         case sb.AuthChangeEvent.signedOut:
-          state = const UnauthenticatedAuthState(); // <--- CAMBIADO
+          state = const UnauthenticatedAuthState();
           break;
         case sb.AuthChangeEvent.userUpdated:
           if (session != null) {
@@ -41,80 +42,99 @@ class Auth extends _$Auth {
           break;
         case sb.AuthChangeEvent.tokenRefreshed:
           break;
-        case sb.AuthChangeEvent.userDeleted: // Asegúrate de tener este caso si existe en tu SDK
-          state = const UnauthenticatedAuthState();
-          showSnackbar('Tu cuenta ha sido eliminada.');
-          break;
         default:
-          // Opcional: loguear eventos no manejados
           // print('Unhandled AuthChangeEvent: $event');
           break;
       }
     });
 
     _checkAuthStatus();
-    return const LoadingAuthState(); // <--- CAMBIADO
+    return const LoadingAuthState(); 
   }
 
   Future<void> _checkAuthStatus() async {
-    state = const LoadingAuthState(); // <--- CAMBIADO
+    state = const LoadingAuthState(); 
     try {
       final user = await _authRepository.getAuthenticatedUserProfile();
-      state = AuthenticatedAuthState(user); // <--- CAMBIADO
+      state = AuthenticatedAuthState(user); 
     } catch (e) {
-      state = const UnauthenticatedAuthState(); // <--- CAMBIADO
-      // Opcional: showSnackbar('Error al cargar perfil tras autenticación: $e');
+      state = const UnauthenticatedAuthState(); 
+      // showSnackbar('Error on checking auth status: $e');
     }
   }
 
   Future<void> login(String email, String password) async {
-    state = const LoadingAuthState(); // <--- CAMBIADO
+    state = const LoadingAuthState(); 
     try {
       await _authRepository.logIn(email, password);
-    } on Exception catch (e) {
-      state = ErrorAuthState(e.toString()); // <--- CAMBIADO
-      showSnackbar(e.toString());
+    } on AuthAppError catch (e) { 
+      state = ErrorAuthState(e.message);
+      showSnackbar(e.message); 
+    } on NetworkAppError catch (e) {
+      state = ErrorAuthState(e.message);
+      showSnackbar(e.message);
+    } catch (e) {
+      state = ErrorAuthState('An unexpected error occurred: ${e.toString()}');
+      showSnackbar('An unexpected error occurred: ${e.toString()}');
     }
   }
 
   Future<void> signup(String email, String password) async {
-    state = const LoadingAuthState(); // <--- CAMBIADO
+    state = const LoadingAuthState(); 
     try {
       await _authRepository.signUp(email, password);
       showSnackbar('¡Registro exitoso! Revisa tu correo para verificar tu cuenta.');
-      state = const UnauthenticatedAuthState(); // <--- CAMBIADO
-    } on Exception catch (e) {
-      state = ErrorAuthState(e.toString()); // <--- CAMBIADO
-      showSnackbar(e.toString());
+      state = const UnauthenticatedAuthState(); 
+    } on AuthAppError catch (e) { 
+      state = ErrorAuthState(e.message);
+      showSnackbar(e.message); 
+    } on NetworkAppError catch (e) {
+      state = ErrorAuthState(e.message);
+      showSnackbar(e.message);
+    } catch (e) {
+      state = ErrorAuthState('An unexpected error occurred: ${e.toString()}');
+      showSnackbar('An unexpected error occurred: ${e.toString()}');
     }
   }
 
   Future<void> logout() async {
-    state = const LoadingAuthState(); // <--- CAMBIADO
+    state = const LoadingAuthState(); 
     try {
       await _authRepository.logOut();
-    } on Exception catch (e) {
-      state = ErrorAuthState(e.toString()); // <--- CAMBIADO
-      showSnackbar(e.toString());
+    } on AuthAppError catch (e) { 
+      state = ErrorAuthState(e.message);
+      showSnackbar(e.message); 
+    } on NetworkAppError catch (e) {
+      state = ErrorAuthState(e.message);
+      showSnackbar(e.message);
+    } catch (e) {
+      state = ErrorAuthState('An unexpected error occurred: ${e.toString()}');
+      showSnackbar('An unexpected error occurred: ${e.toString()}');
     }
   }
 
   Future<void> resetPassword(String email) async {
-    state = const LoadingAuthState(); // <--- CAMBIADO
+    state = const LoadingAuthState(); 
     try {
       await _authRepository.resetPassword(email);
       showSnackbar('Se ha enviado un correo para restablecer tu contraseña. Revisa tu bandeja de entrada.');
-      state = const UnauthenticatedAuthState(); // <--- CAMBIADO
-    } on Exception catch (e) {
-      state = ErrorAuthState(e.toString()); // <--- CAMBIADO
-      showSnackbar(e.toString());
+      state = const UnauthenticatedAuthState(); 
+    } on AuthAppError catch (e) { 
+      state = ErrorAuthState(e.message);
+      showSnackbar(e.message); 
+    } on NetworkAppError catch (e) {
+      state = ErrorAuthState(e.message);
+      showSnackbar(e.message);
+    } catch (e) {
+      state = ErrorAuthState('An unexpected error occurred: ${e.toString()}');
+      showSnackbar('An unexpected error occurred: ${e.toString()}');
     }
   }
 
   void showSnackbar(String message) {
-    _snackbarMessage = message;
+    snackbarMessage = message;
     Future.delayed(const Duration(milliseconds: 100), () {
-      state = MessageAuthState(message); // <--- CAMBIADO
+      state = MessageAuthState(message); 
     });
   }
 }
