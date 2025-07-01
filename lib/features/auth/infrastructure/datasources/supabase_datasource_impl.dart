@@ -3,6 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../domain/domain.dart';
 import '../infrastructure.dart';
 
+//TODO: IMPLEMENT BETTER ERROR MESSAGE 
+
 class SupabaseDatasourceImpl implements AuthDatasource {
    final SupabaseClient _supabaseClient;
 
@@ -22,34 +24,18 @@ class SupabaseDatasourceImpl implements AuthDatasource {
         password: password,
       );
 
-      final Session? session = res.session;
-      final User? supabaseUser = res.user;
-
-      if (session == null || supabaseUser == null) {
-        throw Exception('Inicio de sesión fallido: No se pudo obtener la sesión o el usuario.');
+      final User? supabaseAuthUser = res.user;
+      if (supabaseAuthUser == null) {
+        throw Exception('Login failed: Could not get user. Please try again.');
       }
-
-      // Obtener los datos del perfil del usuario de nuestra tabla user_profiles
-      final response = await _supabaseClient
-          .from('user_profiles')
-          .select()
-          .eq('id', supabaseUser.id)
-          .single();
-
-      return UserMapper.fromJson({
-        ...response, // Datos de user_profiles
-        'email': supabaseUser.email, // Añadimos el email del usuario de Supabase Auth
-      });
-
+      return _loadUserProfile(supabaseAuthUser.id, supabaseAuthUser.email);
     } on AuthException catch (e) {
-      throw Exception('Error de autenticación: ${e.message}');
+      throw Exception('Authentication error: ${e.message}');
     } catch (e) {
-      throw Exception('Error al iniciar sesión: $e');
+      throw Exception('Login failed unexpectedly: $e');
     }
   }
 
-
-  /// Crea también la entrada en 'user_profiles' y 'user_subscriptions'.
   @override
   Future<UserProfile> signUp(String email, String password) async {
     try {
@@ -58,41 +44,34 @@ class SupabaseDatasourceImpl implements AuthDatasource {
         password: password,
       );
 
-      final Session? session = res.session;
-      final User? supabaseUser = res.user;
-
-      if (session == null || supabaseUser == null) {
-        throw Exception('Registro fallido: No se pudo obtener la sesión o el usuario.');
+      final User? supabaseAuthUser = res.user;
+      if (supabaseAuthUser == null) {
+        throw Exception('Sign up failed: Could not get user from Supabase. Please try again.');
       }
-
-      // 1. Crear el perfil del usuario en la tabla 'user_profiles'
       await _supabaseClient.from('user_profiles').insert({
-        'id': supabaseUser.id, // El ID de auth.users
-        'name': null, // O un nombre por defecto si lo pides en el registro
-        'profile_data': {}, // Inicializar si es necesario
+        'id': supabaseAuthUser.id, 
+        'name': null, 
+        'profile_data': {}, 
       });
 
-      // 2. Asignar el plan gratuito por defecto en 'user_subscriptions'
       final freePlan = await _supabaseClient
           .from('subscription_plans')
           .select('id')
-          .eq('name', 'Free') // Asegúrate de tener un plan con nombre 'Free'
+          .eq('name', 'Free')
           .single();
 
 
       await _supabaseClient.from('user_subscriptions').insert({
-        'user_id': supabaseUser.id,
+        'user_id': supabaseAuthUser.id,
         'plan_id': freePlan['id'],
         'status': 'active',
       });
 
-      // Devolver la entidad User creada
-      return UserProfile(id: supabaseUser.id, email: supabaseUser.email!);
+      return _loadUserProfile(supabaseAuthUser.id, supabaseAuthUser.email);
     } on AuthException catch (e) {
-      // Manejar errores específicos de autenticación (ej. email ya registrado)
-      throw Exception('Error de autenticación al registrar: ${e.message}');
+      throw Exception('Registration error: ${e.message}');
     } catch (e) {
-      throw Exception('Error al registrar usuario: $e');
+      throw Exception('Sign up failed unexpectedly: $e');
     }
   }
 
@@ -101,27 +80,69 @@ class SupabaseDatasourceImpl implements AuthDatasource {
     try {
       await _supabaseClient.auth.signOut();
     } on AuthException catch (e) {
-      throw Exception('Error al cerrar sesión: ${e.message}');
+      throw Exception('Logout error: ${e.message}');
     } catch (e) {
-      throw Exception('Error inesperado al cerrar sesión: $e');
+      throw Exception('Logout failed unexpectedly: $e');
     }
   }
 
-  /// Envía un correo de recuperación de contraseña.
   @override
   Future<UserProfile> resetPassword(String email) async {
-    //TODO: Implementar la lógica de restablecimiento de contraseña
-    throw UnimplementedError('resetPassword no está implementado en SupabaseDatasourceImpl');
+    try {
+      await _supabaseClient.auth.resetPasswordForEmail(
+        email,
+        redirectTo: '/',  //TODO: configure deeplink here
+      );
+
+      return UserProfile(id: "", email: email);
+    } on AuthException catch (e) {
+      throw Exception('Password reset request error: ${e.message}');
+    } catch (e) {
+      throw Exception('Password reset request failed unexpectedly: $e');
+    }
   }
-  
+
   @override
   Future<bool> resendVerificationEmail(String email) async {
     try {
-      await _supabaseClient.auth.resend(type: OtpType.signup, email: email);
+      await _supabaseClient.auth.resend(
+          type: OtpType.signup,
+          email: email,
+      );
+
       return true;
+    } on AuthException catch (e) {
+      throw Exception('Resend verification email error: ${e.message}');
     } catch (e) {
-      return false;
+      throw Exception('Resend verification email failed unexpectedly: $e');
     }
   }
+
+
+  Future<UserProfile> _loadUserProfile(String userId, String? email) async {
+    if (email == null) {
+      throw Exception('User email is null. Cannot load profile.');
+    }
+    try {
+      final response = await _supabaseClient
+          .from('user_profiles')
+          .select()
+          .eq('id', userId)
+          .single();
+
+    return UserMapper.fromJson({...response, 'email': email});
+    } catch (e) {
+      throw Exception('Failed to load user profile: $e');
+    }
+  }
+
+    @override
+  Future<UserProfile> getAuthenticatedUserProfile() async {
+    final supabaseUser = _supabaseClient.auth.currentUser;
+    if (supabaseUser == null || supabaseUser.email == null) {
+      throw Exception('There is not a user');
+    }
+    return _loadUserProfile(supabaseUser.id, supabaseUser.email);
+  }
 }
- 
+
