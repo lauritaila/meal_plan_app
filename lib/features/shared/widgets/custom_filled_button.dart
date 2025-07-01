@@ -5,10 +5,12 @@ class CustomFilledButton extends StatelessWidget {
   final void Function()? onPressed;
   final String text;
   final Color? buttonColor;
+  final Color? textColor;
 
   const CustomFilledButton({
     super.key, 
     this.onPressed, 
+    this.textColor,
     required this.text, 
     this.buttonColor
   });
@@ -17,21 +19,21 @@ class CustomFilledButton extends StatelessWidget {
   Widget build(BuildContext context) {
 
     const radius = Radius.circular(10);
+    final Color effectiveButtonColor = buttonColor ?? Theme.of(context).colorScheme.primary;
+    final Color effectiveTextColor = textColor ?? (effectiveButtonColor.computeLuminance() > 0.5
+        ? Colors.black 
+        : Colors.white); 
 
     return FilledButton(
       style: FilledButton.styleFrom(
-        backgroundColor: buttonColor,
+        backgroundColor: effectiveButtonColor,
         shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          bottomLeft: radius,
-          bottomRight: radius,
-          topLeft: radius,
-        )
+        borderRadius: BorderRadius.all(radius),
       )),
-        
-  
-      onPressed: onPressed, 
-      child: Text(text)
+      onPressed: onPressed,
+      autofocus: false, 
+      
+      child: Text(text, style: TextStyle(fontWeight: FontWeight.bold, color: effectiveTextColor ),)
     );
   }
 }
