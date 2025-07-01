@@ -28,6 +28,7 @@ class _LoginForm extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = Theme.of(context).colorScheme;
     final loginFormState = ref.watch(loginFormProvider);
     final loginFormNotifier = ref.read(loginFormProvider.notifier);
 
@@ -42,52 +43,56 @@ class _LoginForm extends ConsumerWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 50),
-      child: Column(
-        children: [
-CustomTextFormField(
-            label: 'Email',
-            keyboardType: TextInputType.emailAddress,
-            onChanged: loginFormNotifier.onEmailChanged,
-            errorMessage: loginFormState.isFormPosted
-                ? loginFormState.email.errorMessage
-                : null,
-          ),
-          const SizedBox(height: 30),
-          CustomTextFormField(
-            label: 'Password',
-            obscureText: true,
-            onChanged: loginFormNotifier.onPasswordChanged,
-            onFieldSubmitted: (_) => loginFormNotifier.onFormSubmitted(),
-            errorMessage: loginFormState.isFormPosted
-                ? loginFormState.password.errorMessage
-                : null,
-          ),
-          const SizedBox(height: 30),
-          SizedBox(
-            width: double.infinity,
-            height: 60,
-            child: CustomFilledButton(
-              text: 'Ingresar',
-              buttonColor: Colors.black,
-              onPressed: loginFormState.isPosting
-                  ? null
-                  : loginFormNotifier.onFormSubmitted,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Login', style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: colors.primary),),
+            const SizedBox(height: 30),
+        CustomTextFormField(
+              label: 'Email',
+              keyboardType: TextInputType.emailAddress,
+              onChanged: loginFormNotifier.onEmailChanged,
+              errorMessage: loginFormState.isFormPosted
+                  ? loginFormState.email.errorMessage
+                  : null,
             ),
-          ),
-          const Spacer(flex: 2),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text('Don\'t have an account?'),
-              SizedBox(width: 5),
-              TextButton(
-                onPressed: () => context.push('/register'),
-                child: const Text('Register'),
+            const SizedBox(height: 15),
+            CustomTextFormField(
+              label: 'Password',
+              obscureText: true,
+              onChanged: loginFormNotifier.onPasswordChanged,
+              onFieldSubmitted: (_) => loginFormNotifier.onFormSubmitted(),
+              errorMessage: loginFormState.isFormPosted
+                  ? loginFormState.password.errorMessage
+                  : null,
+            ),
+            const SizedBox(height: 30),
+            SizedBox(
+              width: double.infinity,
+              height: 40,
+              child: CustomFilledButton(
+                text: 'Login',
+                buttonColor: colors.primary,
+                onPressed: loginFormState.isPosting
+                    ? null
+                    : loginFormNotifier.onFormSubmitted,
               ),
-            ],
-          ),
-          const Spacer(flex: 1),
-        ],
+            ),
+            SizedBox(height: 30),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('Don\'t have an account?'),
+                SizedBox(width: 5),
+                TextButton(
+                  onPressed: () => context.push('/register'),
+                  child: const Text('Register'),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
