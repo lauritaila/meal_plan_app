@@ -86,8 +86,8 @@ class _LoginForm extends ConsumerWidget {
                 const Text('Don\'t have an account?'),
                 SizedBox(width: 5),
                 TextButton(
-                  onPressed: () => context.push('/register'),
-                  child: const Text('Register'),
+                  onPressed: () => context.push('/signup'),
+                  child: const Text('Sign Up'),
                 ),
               ],
             ),

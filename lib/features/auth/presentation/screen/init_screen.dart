@@ -30,7 +30,9 @@ class InitScreen extends StatelessWidget {
               SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
-                child: CustomFilledButton(text: 'Register', onPressed: () {}, buttonColor: colors.primary, textColor: colors.onPrimary),
+                child: CustomFilledButton(text: 'Register', onPressed: () {
+                  context.push('/signup');
+                }, buttonColor: colors.primary, textColor: colors.onPrimary),
               ),
             ],
           ),
