@@ -17,9 +17,9 @@ final appRouterProvider = Provider((ref) {
       // GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
     ],
     redirect: (context, state) {
-      final isGoingToLogin = state.fullPath == '/login';
+      // final isGoingToLogin = state.fullPath == '/login';
       final isGoingToInit = state.fullPath == '/init';
-      final isGoingToRegister = state.fullPath == '/register';
+      // final isGoingToRegister = state.fullPath == '/signup';
 
 
       // 1. If the state is loading or initial
@@ -28,20 +28,20 @@ final appRouterProvider = Provider((ref) {
       }
 
       // 2. If the user is NOT authenticated or there is an authentication error
-      if (authState is UnauthenticatedAuthState || authState is ErrorAuthState) { 
-        return (isGoingToLogin || isGoingToRegister) ? null : '/login';
-      }
+      // if (authState is UnauthenticatedAuthState || authState is ErrorAuthState) { 
+      //   return (isGoingToLogin || isGoingToRegister) ? null : '/init';
+      // }
 
       // 3. If the user IS authenticated
-      if (authState is AuthenticatedAuthState) { 
+      // if (authState is AuthenticatedAuthState) { 
         // return (isGoingToLogin || isGoingToInit) ? '/home' : null;
-      }
+      // }
 
       // 4. For the message state (temporary)
-      if (authState is MessageAuthState) { 
+      // if (authState is MessageAuthState) { 
         // We do not redirect based on a message, let the normal flow continue
-        return null;
-      }
+      //   return null;
+      // }
 
       return null;
     },
