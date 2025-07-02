@@ -47,7 +47,7 @@ class SupabaseDatasourceImpl implements AuthDatasource {
   }
 
   @override
-  Future<UserProfile> signUp(String email, String password) async {
+  Future<UserProfile> signUp(String email, String password, String name) async {
     try {
       final AuthResponse res = await _supabaseClient.auth.signUp(
         email: email,
@@ -60,7 +60,7 @@ class SupabaseDatasourceImpl implements AuthDatasource {
       }
       await _supabaseClient.from('user_profiles').insert({
         'id': supabaseAuthUser.id, 
-        'name': null, 
+        'name': name, 
         'profile_data': {}, 
       });
 

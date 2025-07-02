@@ -79,10 +79,10 @@ class Auth extends _$Auth {
     }
   }
 
-  Future<void> signup(String email, String password) async {
+  Future<void> signup(String email, String password, String name) async {
     state = const LoadingAuthState(); 
     try {
-      await _authRepository.signUp(email, password);
+      await _authRepository.signUp(email, password, name);
       showSnackbar('¡Registro exitoso! Revisa tu correo para verificar tu cuenta.');
       state = const UnauthenticatedAuthState(); 
     } on AuthAppError catch (e) { 

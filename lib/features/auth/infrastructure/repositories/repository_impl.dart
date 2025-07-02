@@ -29,8 +29,8 @@ class AuthRepositoryImpl implements AuthRepository {
   }
   
   @override
-  Future<UserProfile> signUp(String email, String password) {
-    return datasource.signUp(email, password);
+  Future<UserProfile> signUp(String email, String password, String name) {
+    return datasource.signUp(email, password, name);
   }
 
   @override
