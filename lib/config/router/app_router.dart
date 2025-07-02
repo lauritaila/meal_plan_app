@@ -13,11 +13,14 @@ final appRouterProvider = Provider((ref) {
     routes: [
       GoRoute(path: '/init', builder: (context, state) => const InitScreen()),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+      GoRoute(path: '/signup', builder: (context, state) => const SignUpScreen()),
       // GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
     ],
     redirect: (context, state) {
       final isGoingToLogin = state.fullPath == '/login';
       final isGoingToInit = state.fullPath == '/init';
+      final isGoingToRegister = state.fullPath == '/register';
+
 
       // 1. If the state is loading or initial
       if (authState is InitialAuthState || authState is LoadingAuthState) { 
@@ -26,7 +29,7 @@ final appRouterProvider = Provider((ref) {
 
       // 2. If the user is NOT authenticated or there is an authentication error
       if (authState is UnauthenticatedAuthState || authState is ErrorAuthState) { 
-        return isGoingToLogin ? null : '/login';
+        return (isGoingToLogin || isGoingToRegister) ? null : '/login';
       }
 
       // 3. If the user IS authenticated
