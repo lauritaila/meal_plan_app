@@ -1,0 +1,121 @@
+// lib/features/auth/presentation/screens/signup_screen.dart
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import 'package:meal_plan_app/features/shared/shared.dart'; 
+import '../provider/provider.dart';
+
+class SignUpScreen extends StatelessWidget {
+  const SignUpScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _SignUpForm(),
+    );
+  }
+}
+
+class _SignUpForm extends ConsumerWidget {
+  const _SignUpForm();
+
+  void showSnackbar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = Theme.of(context).colorScheme;
+    final signupFormState = ref.watch(signupFormProvider);
+    final signupFormNotifier = ref.read(signupFormProvider.notifier);
+
+    ref.listen(authProvider, (previous, next) {
+      if (next is ErrorAuthState) {
+        showSnackbar(context, next.message);
+      } else if (next is MessageAuthState) {
+        showSnackbar(context, next.message);
+      }
+    });
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 50),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Sign Up',
+              style: TextStyle(
+                fontSize: 30,
+                fontWeight: FontWeight.bold,
+                color: colors.primary,
+              ),
+            ),
+            const SizedBox(height: 30),
+
+            CustomTextFormField(
+              label: 'Name',
+              keyboardType: TextInputType.text,
+              onChanged: signupFormNotifier.onNameChanged,
+              errorMessage: signupFormState.isFormPosted
+                  ? signupFormState.name.errorMessage
+                  : null,
+            ),
+            const SizedBox(height: 15),
+
+            CustomTextFormField(
+              label: 'Email',
+              keyboardType: TextInputType.emailAddress,
+              onChanged: signupFormNotifier.onEmailChanged,
+              errorMessage: signupFormState.isFormPosted
+                  ? signupFormState.email.errorMessage
+                  : null,
+            ),
+            const SizedBox(height: 15),
+
+            CustomTextFormField(
+              label: 'Password',
+              obscureText: true,
+              onChanged: signupFormNotifier.onPasswordChanged,
+              onFieldSubmitted: (_) => signupFormNotifier.onFormSubmitted(),
+              errorMessage: signupFormState.isFormPosted
+                  ? signupFormState.password.errorMessage
+                  : null,
+            ),
+            const SizedBox(height: 30),
+
+            SizedBox(
+              width: double.infinity,
+              height: 40,
+              child: CustomFilledButton(
+                text: 'Sign Up',
+                buttonColor: colors.primary,
+                onPressed: signupFormState.isPosting
+                    ? null
+                    : signupFormNotifier.onFormSubmitted,
+              ),
+            ),
+            const SizedBox(height: 30),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('Do you have an account?'),
+                const SizedBox(width: 5),
+                TextButton(
+                  onPressed: () => context.go('/login'),
+                  child: const Text('Login'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
