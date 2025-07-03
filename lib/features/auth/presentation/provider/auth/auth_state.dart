@@ -1,71 +1,52 @@
 import 'package:meal_plan_app/features/auth/domain/domain.dart'; 
+import 'package:equatable/equatable.dart';
 
-abstract class AuthState {
-  const AuthState(); 
+abstract class AuthState extends Equatable {
+  const AuthState();
+
+  @override
+  List<Object?> get props => [];
 }
 
-// 1. init state
 class InitialAuthState extends AuthState {
   const InitialAuthState();
-
-  @override
-  String toString() => 'InitialAuthState';
 }
 
-// 2. loading state
 class LoadingAuthState extends AuthState {
-  const LoadingAuthState();
-
+  final String? message;
+  const LoadingAuthState({this.message});
   @override
-  String toString() => 'LoadingAuthState';
+  List<Object?> get props => [message];
 }
 
-// 3. authenticated state
 class AuthenticatedAuthState extends AuthState {
   final UserProfile user;
   const AuthenticatedAuthState(this.user);
-
   @override
-  String toString() => 'AuthenticatedAuthState(user: $user)';
-
-  // Optional: for if you need to copy with a different user
-  AuthenticatedAuthState copyWith({UserProfile? user}) {
-    return AuthenticatedAuthState(user ?? this.user);
-  }
+  List<Object?> get props => [user];
 }
 
-// 4. No authenticated state
 class UnauthenticatedAuthState extends AuthState {
   const UnauthenticatedAuthState();
-
-  @override
-  String toString() => 'UnauthenticatedAuthState';
 }
 
-// 5. Error state
 class ErrorAuthState extends AuthState {
   final String message;
   const ErrorAuthState(this.message);
-
   @override
-  String toString() => 'ErrorAuthState(message: $message)';
-
-  // Optional: for if you need to copy with a different user
-  ErrorAuthState copyWith({String? message}) {
-    return ErrorAuthState(message ?? this.message);
-  }
+  List<Object?> get props => [message];
 }
 
-// 6. Message state
 class MessageAuthState extends AuthState {
   final String message;
   const MessageAuthState(this.message);
-
   @override
-  String toString() => 'MessageAuthState(message: $message)';
+  List<Object?> get props => [message];
+}
 
-  // Optional: for if you need to copy with a different user
-  MessageAuthState copyWith({String? message}) {
-    return MessageAuthState(message ?? this.message);
-  }
+class AwaitingEmailVerificationAuthState extends AuthState {
+  final String email;
+  const AwaitingEmailVerificationAuthState(this.email);
+  @override
+  List<Object?> get props => [email];
 }
