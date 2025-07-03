@@ -88,8 +88,6 @@ class LoginForm extends _$LoginForm {
         state.password.value,
       );
 
-    } catch (e) {
-      print(e);
     } finally {
       state = state.copyWith(isPosting: false);
     }
