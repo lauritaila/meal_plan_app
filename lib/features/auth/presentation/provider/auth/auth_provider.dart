@@ -131,6 +131,24 @@ class Auth extends _$Auth {
     }
   }
 
+  Future<void> sendMagicLink(String email) async {
+    state = const LoadingAuthState();
+    try {
+      await _authRepository.sendMagicLink(email);
+      showSnackbar('We have sent a magic link to your email. Please check your inbox.');
+      state = MagicLinkSentAuthState(email);
+    } on AuthAppError catch (e) {
+      state = ErrorAuthState(e.message);
+      showSnackbar(e.message);
+    } on NetworkAppError catch (e) {
+      state = ErrorAuthState(e.message);
+      showSnackbar(e.message);
+    } catch (e) {
+      state = ErrorAuthState('An unexpected error occurred: \\${e.toString()}');
+      showSnackbar('An unexpected error occurred: \\${e.toString()}');
+    }
+  }
+
   void showSnackbar(String message) {
     snackbarMessage = message;
     Future.delayed(const Duration(milliseconds: 100), () {
