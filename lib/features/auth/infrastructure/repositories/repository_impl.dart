@@ -52,6 +52,11 @@ class AuthRepositoryImpl implements AuthRepository {
     throw Exception('No authenticated');
   }
 
+  @override
+  Future<void> sendMagicLink(String email) {
+    return datasource.sendMagicLink(email);
+  }
+
 }
   
 

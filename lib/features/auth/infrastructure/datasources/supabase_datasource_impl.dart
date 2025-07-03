@@ -133,6 +133,16 @@ class SupabaseDatasourceImpl implements AuthDatasource {
     }
   }
 
+  @override
+  Future<void> sendMagicLink(String email) async {
+    try {
+      await _supabaseClient.auth.signInWithOtp(email: email);
+    } on AuthException catch (e) {
+      throw AuthAppError(e.message, code: e.statusCode);
+    } catch (e) {
+      throw NetworkAppError('Network or unexpected error during magic link: \\${e.toString()}');
+    }
+  }
 
   Future<UserProfile> _loadUserProfile(String userId, String? email) async {
     if (email == null) {

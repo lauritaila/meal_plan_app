@@ -8,4 +8,5 @@ abstract class AuthDatasource {
   Future<UserProfile> resetPassword(String email);
   Future<bool> resendVerificationEmail(String email);
   Future<UserProfile> getAuthenticatedUserProfile();
+  Future<void> sendMagicLink(String email);
 }
