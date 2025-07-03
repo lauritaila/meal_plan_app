@@ -37,6 +37,8 @@ class _LoginForm extends ConsumerWidget {
         showSnackbar(context, next.message); 
       } else if (next is MessageAuthState) { 
         showSnackbar(context, next.message); 
+      } else if (next is MagicLinkSentAuthState) {
+        context.go('/waiting-verification', extra: next.email);
       }
     });
 
@@ -49,7 +51,7 @@ class _LoginForm extends ConsumerWidget {
           children: [
             Text('Login', style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: colors.primary),),
             const SizedBox(height: 30),
-        CustomTextFormField(
+            CustomTextFormField(
               label: 'Email',
               keyboardType: TextInputType.emailAddress,
               onChanged: loginFormNotifier.onEmailChanged,
@@ -57,22 +59,12 @@ class _LoginForm extends ConsumerWidget {
                   ? loginFormState.email.errorMessage
                   : null,
             ),
-            const SizedBox(height: 15),
-            CustomTextFormField(
-              label: 'Password',
-              obscureText: true,
-              onChanged: loginFormNotifier.onPasswordChanged,
-              onFieldSubmitted: (_) => loginFormNotifier.onFormSubmitted(),
-              errorMessage: loginFormState.isFormPosted
-                  ? loginFormState.password.errorMessage
-                  : null,
-            ),
             const SizedBox(height: 30),
             SizedBox(
               width: double.infinity,
               height: 40,
               child: CustomFilledButton(
-                text: 'Login',
+                text: 'Send Magic Link',
                 buttonColor: colors.primary,
                 onPressed: loginFormState.isPosting
                     ? null
