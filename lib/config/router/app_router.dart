@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // You need Riverpod to listen
 import 'package:meal_plan_app/features/auth/presentation/provider/provider.dart';
 import 'package:meal_plan_app/features/auth/auth.dart';
+import 'package:flutter/material.dart';
 
 import '../../features/shared/shared.dart';
 
@@ -14,12 +15,34 @@ final appRouterProvider = Provider((ref) {
       GoRoute(path: '/init', builder: (context, state) => const InitScreen()),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(path: '/signup', builder: (context, state) => const SignUpScreen()),
+      GoRoute(path: '/waiting-verification', builder: (context, state) {
+        final email = state.extra as String? ?? '';
+        return WaitingVerificationScreen(
+          email: email,
+          onResend: () async {
+            final scaffoldMessenger = ScaffoldMessenger.of(context);
+            final container = ProviderScope.containerOf(context, listen: false);
+            final auth = container.read(authProvider.notifier);
+            try {
+              await auth.sendMagicLink(email);
+              scaffoldMessenger.showSnackBar(
+                const SnackBar(content: Text('Verification link resent!')),
+              );
+            } catch (e) {
+              scaffoldMessenger.showSnackBar(
+                SnackBar(content: Text('Error: \\${e.toString()}')),
+              );
+            }
+          },
+        );
+      }),
       // GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
     ],
     redirect: (context, state) {
       // final isGoingToLogin = state.fullPath == '/login';
       final isGoingToInit = state.fullPath == '/init';
       // final isGoingToRegister = state.fullPath == '/signup';
+      // final isGoingToVerifyEmail = state.fullPath == '/verify-email';
 
 
       // 1. If the state is loading or initial
