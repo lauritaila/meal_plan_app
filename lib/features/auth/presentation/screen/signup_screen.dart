@@ -39,6 +39,8 @@ class _SignUpForm extends ConsumerWidget {
         showSnackbar(context, next.message);
       } else if (next is MessageAuthState) {
         showSnackbar(context, next.message);
+      } else if (next is MagicLinkSentAuthState) {
+        context.go('/waiting-verification', extra: next.email);
       }
     });
 
@@ -49,7 +51,7 @@ class _SignUpForm extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Sign Up',
+              'Sign Up with Magic Link',
               style: TextStyle(
                 fontSize: 30,
                 fontWeight: FontWeight.bold,
@@ -57,17 +59,14 @@ class _SignUpForm extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 30),
-
             CustomTextFormField(
               label: 'Name',
-              keyboardType: TextInputType.text,
               onChanged: signupFormNotifier.onNameChanged,
               errorMessage: signupFormState.isFormPosted
                   ? signupFormState.name.errorMessage
                   : null,
             ),
             const SizedBox(height: 15),
-
             CustomTextFormField(
               label: 'Email',
               keyboardType: TextInputType.emailAddress,
@@ -76,24 +75,12 @@ class _SignUpForm extends ConsumerWidget {
                   ? signupFormState.email.errorMessage
                   : null,
             ),
-            const SizedBox(height: 15),
-
-            CustomTextFormField(
-              label: 'Password',
-              obscureText: true,
-              onChanged: signupFormNotifier.onPasswordChanged,
-              onFieldSubmitted: (_) => signupFormNotifier.onFormSubmitted(),
-              errorMessage: signupFormState.isFormPosted
-                  ? signupFormState.password.errorMessage
-                  : null,
-            ),
             const SizedBox(height: 30),
-
             SizedBox(
               width: double.infinity,
               height: 40,
               child: CustomFilledButton(
-                text: 'Sign Up',
+                text: 'Send Magic Link',
                 buttonColor: colors.primary,
                 onPressed: signupFormState.isPosting
                     ? null
@@ -101,7 +88,6 @@ class _SignUpForm extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 30),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [

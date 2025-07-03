@@ -2,7 +2,6 @@
 
 import 'package:formz/formz.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-
 import 'package:meal_plan_app/features/shared/shared.dart';
 
 import '../provider.dart'; 
@@ -14,7 +13,6 @@ class SignupFormState {
   final bool isValid;
   final Name name; 
   final Email email;
-  final Password password;
 
   SignupFormState({
     this.isPosting = false,
@@ -22,7 +20,6 @@ class SignupFormState {
     this.isValid = false,
     this.name = const Name.pure(), 
     this.email = const Email.pure(),
-    this.password = const Password.pure(),
   });
 
   SignupFormState copyWith({
@@ -31,7 +28,6 @@ class SignupFormState {
     bool? isValid,
     Name? name,
     Email? email,
-    Password? password,
   }) =>
       SignupFormState(
         isPosting: isPosting ?? this.isPosting,
@@ -39,7 +35,6 @@ class SignupFormState {
         isValid: isValid ?? this.isValid,
         name: name ?? this.name,
         email: email ?? this.email,
-        password: password ?? this.password,
       );
 
   @override
@@ -51,7 +46,6 @@ class SignupFormState {
   isValid: $isValid
   name: $name
   email: $email
-  password: $password
 ''';
   }
 }
@@ -67,7 +61,7 @@ class SignupForm extends _$SignupForm {
     final newName = Name.dirty(value);
     state = state.copyWith(
       name: newName,
-      isValid: Formz.validate([newName, state.email, state.password]),
+      isValid: Formz.validate([newName, state.email]),
     );
   }
 
@@ -75,15 +69,7 @@ class SignupForm extends _$SignupForm {
     final newEmail = Email.dirty(value);
     state = state.copyWith(
       email: newEmail,
-      isValid: Formz.validate([state.name, newEmail, state.password]),
-    );
-  }
-
-  void onPasswordChanged(String value) {
-    final newPassword = Password.dirty(value);
-    state = state.copyWith(
-      password: newPassword,
-      isValid: Formz.validate([state.name, state.email, newPassword]),
+      isValid: Formz.validate([state.name, newEmail]),
     );
   }
 
@@ -96,11 +82,9 @@ class SignupForm extends _$SignupForm {
 
     state = state.copyWith(isPosting: true); 
     try {
-      await ref.read(authRepositoryProvider).signUp(
-            state.email.value,
-            state.password.value,
-            state.name.value
-          );
+      await ref.read(authProvider.notifier).sendMagicLink(
+        state.email.value,
+      );
     } catch (e) {
       ref.read(authProvider.notifier).showSnackbar(e.toString());
     } finally {
@@ -111,14 +95,12 @@ class SignupForm extends _$SignupForm {
   void _touchEveryField() {
     final name = Name.dirty(state.name.value);
     final email = Email.dirty(state.email.value);
-    final password = Password.dirty(state.password.value);
 
     state = state.copyWith(
       isFormPosted: true, 
       name: name,
       email: email,
-      password: password,
-      isValid: Formz.validate([name, email, password]),
+      isValid: Formz.validate([name, email]),
     );
   }
 }
