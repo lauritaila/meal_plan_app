@@ -112,25 +112,7 @@ class Auth extends _$Auth {
       showSnackbar('An unexpected error occurred: ${e.toString()}');
     }
   }
-
-  Future<void> resetPassword(String email) async {
-    state = const LoadingAuthState(); 
-    try {
-      await _authRepository.resetPassword(email);
-      showSnackbar('Se ha enviado un correo para restablecer tu contraseña. Revisa tu bandeja de entrada.');
-      state = const UnauthenticatedAuthState(); 
-    } on AuthAppError catch (e) { 
-      state = ErrorAuthState(e.message);
-      showSnackbar(e.message); 
-    } on NetworkAppError catch (e) {
-      state = ErrorAuthState(e.message);
-      showSnackbar(e.message);
-    } catch (e) {
-      state = ErrorAuthState('An unexpected error occurred: ${e.toString()}');
-      showSnackbar('An unexpected error occurred: ${e.toString()}');
-    }
-  }
-
+  
   Future<void> sendMagicLink(String email) async {
     state = const LoadingAuthState();
     try {

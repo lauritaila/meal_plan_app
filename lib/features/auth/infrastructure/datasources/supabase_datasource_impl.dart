@@ -102,22 +102,6 @@ class SupabaseDatasourceImpl implements AuthDatasource {
   }
 
   @override
-  Future<UserProfile> resetPassword(String email) async {
-    try {
-      await _supabaseClient.auth.resetPasswordForEmail(
-        email,
-        redirectTo: '/',  //TODO: configure deeplink here
-      );
-
-      return UserProfile(id: "", email: email);
-} on AuthException catch (e) {
-      throw AuthAppError(e.message, code: e.statusCode);
-    } catch (e) {
-      throw AuthAppError.passwordResetFailed(); // Más específico aquí
-    }
-  }
-
-  @override
   Future<bool> resendVerificationEmail(String email) async {
     try {
       await _supabaseClient.auth.resend(
@@ -156,7 +140,7 @@ class SupabaseDatasourceImpl implements AuthDatasource {
           .single();
 
     return UserMapper.fromJson({...response, 'email': email});
- } on PostgrestException catch (e) { // Captura errores de la base de datos Supabase
+ } on PostgrestException catch (e) { 
       throw DataAppError(e.message, code: e.code);
     } catch (e) {
       throw AuthAppError('An unexpected error occurred while loading profile: ${e.toString()}');

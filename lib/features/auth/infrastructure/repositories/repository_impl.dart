@@ -14,11 +14,6 @@ class AuthRepositoryImpl implements AuthRepository {
   }
   
   @override
-  Future<UserProfile> resetPassword(String email) {
-    return datasource.resetPassword(email);
-  }
-  
-  @override
   Future<UserProfile> logIn(String email, String password) {
     return datasource.logIn(email, password);
   }
