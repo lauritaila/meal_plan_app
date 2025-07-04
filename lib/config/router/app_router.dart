@@ -1,13 +1,13 @@
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // You need Riverpod to listen
-import 'package:meal_plan_app/features/auth/presentation/provider/provider.dart';
+// import 'package:meal_plan_app/features/auth/presentation/provider/provider.dart';
 import 'package:meal_plan_app/features/auth/auth.dart';
-import 'package:flutter/material.dart';
+// import 'package:flutter/material.dart';
 
 import '../../features/shared/shared.dart';
 
 final appRouterProvider = Provider((ref) {
-  final authState = ref.watch(authProvider);
+  // final authState = ref.watch(authProvider);
 
   return GoRouter(
     initialLocation: '/init',
@@ -19,36 +19,21 @@ final appRouterProvider = Provider((ref) {
         final email = state.extra as String? ?? '';
         return WaitingVerificationScreen(
           email: email,
-          onResend: () async {
-            final scaffoldMessenger = ScaffoldMessenger.of(context);
-            final container = ProviderScope.containerOf(context, listen: false);
-            final auth = container.read(authProvider.notifier);
-            try {
-              await auth.sendMagicLink(email);
-              scaffoldMessenger.showSnackBar(
-                const SnackBar(content: Text('Verification link resent!')),
-              );
-            } catch (e) {
-              scaffoldMessenger.showSnackBar(
-                SnackBar(content: Text('Error: \\${e.toString()}')),
-              );
-            }
-          },
         );
       }),
       // GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
     ],
     redirect: (context, state) {
       // final isGoingToLogin = state.fullPath == '/login';
-      final isGoingToInit = state.fullPath == '/init';
+      // final isGoingToInit = state.fullPath == '/init';
       // final isGoingToRegister = state.fullPath == '/signup';
       // final isGoingToVerifyEmail = state.fullPath == '/verify-email';
 
 
       // 1. If the state is loading or initial
-      if (authState is InitialAuthState || authState is LoadingAuthState) { 
-        return isGoingToInit ? null : '/init';
-      }
+      // if (authState is InitialAuthState || authState is LoadingAuthState) { 
+      //   return isGoingToInit ? null : '/init';
+      // }
 
       // 2. If the user is NOT authenticated or there is an authentication error
       // if (authState is UnauthenticatedAuthState || authState is ErrorAuthState) { 
