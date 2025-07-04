@@ -1,8 +1,8 @@
 // lib/features/auth/presentation/providers/auth_provider.dart
 
-import 'package:meal_plan_app/config/errors/app_errors.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
+import 'package:meal_plan_app/config/config.dart';
 import 'package:meal_plan_app/features/auth/domain/domain.dart';
 import '../provider.dart';
 part 'auth_provider.g.dart';

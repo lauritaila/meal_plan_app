@@ -1,4 +1,4 @@
-import 'package:meal_plan_app/config/errors/app_errors.dart';
+import 'package:meal_plan_app/config/config.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../domain/domain.dart';
