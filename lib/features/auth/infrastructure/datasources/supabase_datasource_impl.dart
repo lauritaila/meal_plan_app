@@ -147,7 +147,7 @@ class SupabaseDatasourceImpl implements AuthDatasource {
     }
   }
 
-    @override
+  @override
   Future<UserProfile> getAuthenticatedUserProfile() async {
     final supabaseUser = _supabaseClient.auth.currentUser;
     if (supabaseUser == null || supabaseUser.email == null) {
@@ -155,5 +155,33 @@ class SupabaseDatasourceImpl implements AuthDatasource {
     }
     return _loadUserProfile(supabaseUser.id, supabaseUser.email);
   }
+  
+  @override
+  Future<void> saveUserPreference(UserPreferences userPreference, String userId) async {
+    try {
+      final preferencesMap = UserPreferencesMapper.toMap(userPreference);
+
+
+      preferencesMap.remove('id'); 
+      preferencesMap.remove('created_at'); 
+      preferencesMap.remove('updated_at'); 
+      
+      // Aseguramos que el user_id sea el correcto
+      preferencesMap['user_id'] = userId;
+
+      // Usamos 'upsert' para insertar una nueva fila o actualizarla si ya existe
+      // Supabase identificará el conflicto en la columna 'user_id' (que debe ser UNIQUE)
+      // y actualizará la fila en lugar de crear una nueva.
+      await _supabaseClient.from('user_preferences').upsert(preferencesMap);
+
+    } on PostgrestException catch (e) {
+      // Manejo de errores específicos de la base de datos
+      throw DataAppError('Error saving user preferences: ${e.message}', code: e.code);
+    } catch (e) {
+      // Manejo de otros errores inesperados
+      throw NetworkAppError('An unexpected error occurred: ${e.toString()}');
+    }
+  }
 }
+
 

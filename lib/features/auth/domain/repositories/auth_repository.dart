@@ -8,4 +8,5 @@ abstract class AuthRepository {
   Future<bool> resendVerificationEmail(String email);
   Future<UserProfile> getAuthenticatedUserProfile();
   Future<void> sendMagicLink(String email);
+  Future<void> saveUserPreference(UserPreferences userPreference, String userId);
 }

@@ -51,6 +51,11 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> sendMagicLink(String email) {
     return datasource.sendMagicLink(email);
   }
+  
+  @override
+  Future<void> saveUserPreference(UserPreferences userPreference, String userId) {
+    return datasource.saveUserPreference(userPreference, userId);
+  }
 
 }
   
