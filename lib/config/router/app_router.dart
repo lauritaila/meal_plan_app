@@ -15,6 +15,7 @@ final appRouterProvider = Provider((ref) {
       GoRoute(path: '/init', builder: (context, state) => const InitScreen()),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(path: '/signup', builder: (context, state) => const SignUpScreen()),
+      GoRoute(path: '/preferences', builder: (context, state) => const PreferenceWizardScreen()),
       GoRoute(path: '/waiting-verification', builder: (context, state) {
         final email = state.extra as String? ?? '';
         return WaitingVerificationScreen(
