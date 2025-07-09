@@ -8,6 +8,7 @@ class UserMapper {
       email: json['email'] as String,
       name: json['name'] as String?,
       profileData: json['profile_data'] as Map<String, dynamic>?,
+      onboardingComplete: json['onboarding_complete'] as bool? ?? false,
     );
   }
   
