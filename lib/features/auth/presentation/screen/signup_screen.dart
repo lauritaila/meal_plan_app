@@ -39,8 +39,6 @@ class _SignUpForm extends ConsumerWidget {
         showSnackbar(context, next.message);
       } else if (next is MessageAuthState) {
         showSnackbar(context, next.message);
-      } else if (next is MagicLinkSentAuthState) {
-        context.go('/waiting-verification', extra: next.email);
       }
     });
 
@@ -51,7 +49,7 @@ class _SignUpForm extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Sign Up with Magic Link',
+              'Sign Up',
               style: TextStyle(
                 fontSize: 30,
                 fontWeight: FontWeight.bold,
@@ -80,7 +78,7 @@ class _SignUpForm extends ConsumerWidget {
               width: double.infinity,
               height: 40,
               child: CustomFilledButton(
-                text: 'Send Magic Link',
+                text: 'Send OTP',
                 buttonColor: colors.primary,
                 onPressed: signupFormState.isPosting
                     ? null

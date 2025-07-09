@@ -37,8 +37,6 @@ class _LoginForm extends ConsumerWidget {
         showSnackbar(context, next.message); 
       } else if (next is MessageAuthState) { 
         showSnackbar(context, next.message); 
-      } else if (next is MagicLinkSentAuthState) {
-        context.go('/waiting-verification', extra: next.email);
       }
     });
 

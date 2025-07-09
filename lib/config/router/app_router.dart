@@ -1,13 +1,12 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart'; // You need Riverpod to listen
-// import 'package:meal_plan_app/features/auth/presentation/provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:meal_plan_app/features/auth/auth.dart';
-// import 'package:flutter/material.dart';
+import 'package:meal_plan_app/features/auth/presentation/provider/provider.dart';
+import 'package:meal_plan_app/features/shared/shared.dart';
 
-import '../../features/shared/shared.dart';
-
-final appRouterProvider = Provider((ref) {
-  // final authState = ref.watch(authProvider);
+final appRouterProvider = Provider<GoRouter>((ref) {
+  final authState = ref.watch(authProvider);
 
   return GoRouter(
     initialLocation: '/init',
@@ -15,43 +14,37 @@ final appRouterProvider = Provider((ref) {
       GoRoute(path: '/init', builder: (context, state) => const InitScreen()),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(path: '/signup', builder: (context, state) => const SignUpScreen()),
-      GoRoute(path: '/preferences', builder: (context, state) => const PreferenceWizardScreen()),
-      GoRoute(path: '/waiting-verification', builder: (context, state) {
-        final email = state.extra as String? ?? '';
-        return WaitingVerificationScreen(
-          email: email,
-        );
-      }),
-      // GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
+      GoRoute(path: '/preferences-wizard', builder: (context, state) => const PreferenceWizardScreen()),
+      GoRoute(path: '/verify-otp', builder: (context, state) => const OtpVerificationScreen()),
+      // Asegúrate de tener una ruta de inicio
+      GoRoute(path: '/home', builder: (context, state) => const Scaffold(body: Center(child: Text('Home Screen')))),
     ],
     redirect: (context, state) {
-      // final isGoingToLogin = state.fullPath == '/login';
-      // final isGoingToInit = state.fullPath == '/init';
-      // final isGoingToRegister = state.fullPath == '/signup';
-      // final isGoingToVerifyEmail = state.fullPath == '/verify-email';
+      final authRoutes = ['/login', '/signup', '/verify-otp', '/init'];
+      final isGoingToAuthRoute = authRoutes.contains(state.matchedLocation);
 
+      if (authState is LoadingAuthState) {
+        return '/init';
+      }
 
-      // 1. If the state is loading or initial
-      // if (authState is InitialAuthState || authState is LoadingAuthState) { 
-      //   return isGoingToInit ? null : '/init';
-      // }
+      if (authState is AwaitingOtpInputState) {
+        return state.matchedLocation == '/verify-otp' ? null : '/verify-otp';
+      }
 
-      // 2. If the user is NOT authenticated or there is an authentication error
-      // if (authState is UnauthenticatedAuthState || authState is ErrorAuthState) { 
-      //   return (isGoingToLogin || isGoingToRegister) ? null : '/init';
-      // }
+      if (authState is AuthenticatedAuthState) {
+        final onboardingComplete = authState.user.onboardingComplete;
 
-      // 3. If the user IS authenticated
-      // if (authState is AuthenticatedAuthState) { 
-        // return (isGoingToLogin || isGoingToInit) ? '/home' : null;
-      // }
+        if (!onboardingComplete) {
+          return state.matchedLocation == '/preferences-wizard' ? null : '/preferences-wizard';
+        }
 
-      // 4. For the message state (temporary)
-      // if (authState is MessageAuthState) { 
-        // We do not redirect based on a message, let the normal flow continue
-      //   return null;
-      // }
-
+        if (isGoingToAuthRoute) {
+          return '/home';
+        }
+      }
+      if (authState is! AuthenticatedAuthState) {
+        return isGoingToAuthRoute ? null : '/login';
+      }
       return null;
     },
     errorBuilder: (context, state) => ErrorScreen(error: state.error),
