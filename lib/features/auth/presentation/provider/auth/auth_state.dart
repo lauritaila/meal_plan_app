@@ -51,9 +51,10 @@ class AwaitingEmailVerificationAuthState extends AuthState {
   List<Object?> get props => [email];
 }
 
-class MagicLinkSentAuthState extends AuthState {
+
+class AwaitingOtpInputState extends AuthState {
   final String email;
-  const MagicLinkSentAuthState(this.email);
+  const AwaitingOtpInputState(this.email);
   @override
   List<Object?> get props => [email];
 }

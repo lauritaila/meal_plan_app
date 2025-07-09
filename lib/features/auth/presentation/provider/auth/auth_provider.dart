@@ -84,7 +84,7 @@ class Auth extends _$Auth {
     try {
       await _authRepository.signUp(email, password, name);
       showSnackbar('¡Registro exitoso! Revisa tu correo para verificar tu cuenta.');
-      state = const UnauthenticatedAuthState(); 
+      state = AwaitingOtpInputState(email);
     } on AuthAppError catch (e) { 
       state = ErrorAuthState(e.message);
       showSnackbar(e.message); 
@@ -113,12 +113,12 @@ class Auth extends _$Auth {
     }
   }
   
-  Future<void> sendMagicLink(String email) async {
+  Future<void> sendOtp(String email) async {
     state = const LoadingAuthState();
     try {
-      await _authRepository.sendMagicLink(email);
-      showSnackbar('We have sent a magic link to your email. Please check your inbox.');
-      state = MagicLinkSentAuthState(email);
+      await _authRepository.signInWithOtp(email);
+      showSnackbar('We have sent a code to your email. Please check your inbox.');
+      state = AwaitingOtpInputState(email);
     } on AuthAppError catch (e) {
       state = ErrorAuthState(e.message);
       showSnackbar(e.message);
@@ -126,8 +126,24 @@ class Auth extends _$Auth {
       state = ErrorAuthState(e.message);
       showSnackbar(e.message);
     } catch (e) {
-      state = ErrorAuthState('An unexpected error occurred: \\${e.toString()}');
-      showSnackbar('An unexpected error occurred: \\${e.toString()}');
+      state = ErrorAuthState('An unexpected error occurred: ${e.toString()}');
+      showSnackbar('An unexpected error occurred: ${e.toString()}');
+    }
+  }
+  
+  Future<void> verifyOtp(String email, String token) async {
+    state = const LoadingAuthState();
+    try {
+      await _authRepository.verifyOtp(email, token);
+    } on AuthAppError catch (e) {
+      state = AwaitingOtpInputState(email);
+      showSnackbar(e.message);
+    } on NetworkAppError catch (e) {
+      state = AwaitingOtpInputState(email);
+      showSnackbar(e.message);
+    } catch (e) {
+      state = AwaitingOtpInputState(email);
+      showSnackbar('An unexpected error occurred: ${e.toString()}');
     }
   }
 
