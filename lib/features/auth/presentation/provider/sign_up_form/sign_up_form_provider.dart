@@ -82,7 +82,7 @@ class SignupForm extends _$SignupForm {
 
     state = state.copyWith(isPosting: true); 
     try {
-      await ref.read(authProvider.notifier).sendMagicLink(
+      await ref.read(authProvider.notifier).sendOtp(
         state.email.value,
       );
     } catch (e) {

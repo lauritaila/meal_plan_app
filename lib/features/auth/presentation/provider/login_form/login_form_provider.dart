@@ -70,7 +70,7 @@ class LoginForm extends _$LoginForm {
     state = state.copyWith(isPosting: true);
 
     try {
-      await ref.read(authProvider.notifier).sendMagicLink(
+      await ref.read(authProvider.notifier).sendOtp(
         state.email.value,
       );
     } finally {
