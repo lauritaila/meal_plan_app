@@ -62,6 +62,7 @@ class SupabaseDatasourceImpl implements AuthDatasource {
         'id': supabaseAuthUser.id, 
         'name': name, 
         'profile_data': {}, 
+        'onboarding_complete': false,
       });
 
       final freePlan = await _supabaseClient
@@ -117,16 +118,6 @@ class SupabaseDatasourceImpl implements AuthDatasource {
     }
   }
 
-  @override
-  Future<void> sendMagicLink(String email) async {
-    try {
-      await _supabaseClient.auth.signInWithOtp(email: email);
-    } on AuthException catch (e) {
-      throw AuthAppError(e.message, code: e.statusCode);
-    } catch (e) {
-      throw NetworkAppError('Network or unexpected error during magic link: \\${e.toString()}');
-    }
-  }
 
   Future<UserProfile> _loadUserProfile(String userId, String? email) async {
     if (email == null) {
@@ -166,13 +157,14 @@ class SupabaseDatasourceImpl implements AuthDatasource {
       preferencesMap.remove('created_at'); 
       preferencesMap.remove('updated_at'); 
       
-      // Aseguramos que el user_id sea el correcto
       preferencesMap['user_id'] = userId;
 
-      // Usamos 'upsert' para insertar una nueva fila o actualizarla si ya existe
-      // Supabase identificará el conflicto en la columna 'user_id' (que debe ser UNIQUE)
-      // y actualizará la fila en lugar de crear una nueva.
       await _supabaseClient.from('user_preferences').upsert(preferencesMap);
+
+      await _supabaseClient
+          .from('user_profiles')
+          .update({'onboarding_complete': true})
+          .eq('id', userId);
 
     } on PostgrestException catch (e) {
       // Manejo de errores específicos de la base de datos
@@ -180,6 +172,47 @@ class SupabaseDatasourceImpl implements AuthDatasource {
     } catch (e) {
       // Manejo de otros errores inesperados
       throw NetworkAppError('An unexpected error occurred: ${e.toString()}');
+    }
+  }
+  
+ @override
+  Future<void> signInWithOtp(String email) async {
+    try {
+      await _supabaseClient.auth.signInWithOtp(
+        email: email,
+        // Opcional: Redirige a una URL si la app no está instalada (útil para web)
+        // emailRedirectTo: 'io.supabase.flutterquickstart://login-callback/',
+      );
+    } on AuthException catch (e) {
+      throw AuthAppError(e.message, code: e.statusCode);
+    } catch (e) {
+      throw NetworkAppError('Network or unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<UserProfile> verifyOtp(String email, String token) async {
+    try {
+      final AuthResponse res = await _supabaseClient.auth.verifyOTP(
+        type: OtpType.email, // O OtpType.sms si usas teléfono
+        email: email,
+        token: token,
+      );
+
+      final User? supabaseAuthUser = res.user;
+      if (supabaseAuthUser == null) {
+        throw AuthAppError('OTP verification failed: Could not get user from Supabase.');
+      }
+      // Una vez verificado, cargamos su perfil completo
+      return _loadUserProfile(supabaseAuthUser.id, supabaseAuthUser.email);
+
+    } on AuthException catch (e) {
+      if (e.message.contains('Invalid OTP')) {
+        throw const AuthAppError('Invalid or expired code.');
+      }
+      throw AuthAppError(e.message, code: e.statusCode);
+    } catch (e) {
+      throw NetworkAppError('Network or unexpected error: ${e.toString()}');
     }
   }
 }

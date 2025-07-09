@@ -46,15 +46,20 @@ class AuthRepositoryImpl implements AuthRepository {
     }
     throw Exception('No authenticated');
   }
-
-  @override
-  Future<void> sendMagicLink(String email) {
-    return datasource.sendMagicLink(email);
-  }
   
   @override
   Future<void> saveUserPreference(UserPreferences userPreference, String userId) {
     return datasource.saveUserPreference(userPreference, userId);
+  }
+
+  @override
+  Future<void> signInWithOtp(String email) {
+    return datasource.signInWithOtp(email);
+  }
+
+  @override
+  Future<UserProfile> verifyOtp(String email, String token) {
+    return datasource.verifyOtp(email, token);
   }
 
 }

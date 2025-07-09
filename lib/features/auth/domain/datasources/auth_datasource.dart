@@ -7,6 +7,7 @@ abstract class AuthDatasource {
   Future<void> logOut();
   Future<bool> resendVerificationEmail(String email);
   Future<UserProfile> getAuthenticatedUserProfile();
-  Future<void> sendMagicLink(String email);
+  Future<void> signInWithOtp(String email);
+  Future<UserProfile> verifyOtp(String email, String token);
   Future<void> saveUserPreference(UserPreferences userPreference, String userId);
 }
