@@ -29,11 +29,6 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<bool> resendVerificationEmail(String email) {
-    return datasource.resendVerificationEmail(email);
-  }
-
-  @override
   Future<UserProfile> getAuthenticatedUserProfile() async {
     final isAuthenticated = await datasource.isAuthenticated();
     if (isAuthenticated) {

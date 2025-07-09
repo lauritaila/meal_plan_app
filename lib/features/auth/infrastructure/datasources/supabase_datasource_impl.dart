@@ -5,7 +5,7 @@ import '../../domain/domain.dart';
 import '../infrastructure.dart';
 
 class SupabaseDatasourceImpl implements AuthDatasource {
-   final SupabaseClient _supabaseClient;
+  final SupabaseClient _supabaseClient;
 
   SupabaseDatasourceImpl(this._supabaseClient);
 
@@ -25,24 +25,21 @@ class SupabaseDatasourceImpl implements AuthDatasource {
 
       final User? supabaseAuthUser = res.user;
       if (supabaseAuthUser == null) {
-        throw AuthAppError('Login failed: Could not get user from Supabase.');
+        throw const AuthAppError.unexpected(message: 'Login failed: Could not get user from Supabase.');
       }
       return _loadUserProfile(supabaseAuthUser.id, supabaseAuthUser.email);
     } on AuthException catch (e) {
-      if (e.statusCode == '400' && e.message.contains('Invalid login credentials')) {
+      if (e.message.contains('Invalid login credentials')) {
         throw const AuthAppError.invalidCredentials();
       }
-      if (e.message.contains('Email not confirmed')) { 
+      if (e.message.contains('Email not confirmed')) {
         throw const AuthAppError.emailNotVerified();
       }
-      if (e.message.contains('User not found')) {
-        throw const AuthAppError.userNotFound();
-      }
-      throw AuthAppError(e.message, code: e.statusCode); 
-    } on PostgrestException catch (e) { 
-      throw DataAppError(e.message, code: e.code);
+      throw const AuthAppError.unexpected();
+    } on PostgrestException {
+      throw const DataAppError.fetchFailed('user profile');
     } catch (e) {
-      throw NetworkAppError('Network or unexpected error: ${e.toString()}'); // Usamos NetworkAppError
+      throw const NetworkAppError.noConnection();
     }
   }
 
@@ -56,22 +53,17 @@ class SupabaseDatasourceImpl implements AuthDatasource {
 
       final User? supabaseAuthUser = res.user;
       if (supabaseAuthUser == null) {
-        throw AuthAppError('Sign up failed: Could not get user from Supabase.');
+        throw const AuthAppError.unexpected(message: 'Sign up failed: Could not get user from Supabase.');
       }
+      
       await _supabaseClient.from('user_profiles').insert({
-        'id': supabaseAuthUser.id, 
-        'name': name, 
-        'profile_data': {}, 
+        'id': supabaseAuthUser.id,
+        'name': name,
+        'profile_data': {},
         'onboarding_complete': false,
       });
 
-      final freePlan = await _supabaseClient
-          .from('subscription_plans')
-          .select('id')
-          .eq('name', 'Free')
-          .single();
-
-
+      final freePlan = await _supabaseClient.from('subscription_plans').select('id').eq('name', 'Free').single();
       await _supabaseClient.from('user_subscriptions').insert({
         'user_id': supabaseAuthUser.id,
         'plan_id': freePlan['id'],
@@ -80,14 +72,14 @@ class SupabaseDatasourceImpl implements AuthDatasource {
 
       return _loadUserProfile(supabaseAuthUser.id, supabaseAuthUser.email);
     } on AuthException catch (e) {
-      if (e.statusCode == '400' && e.message.contains('User already registered')) {
+      if (e.message.contains('User already registered')) {
         throw const AuthAppError.emailAlreadyInUse();
       }
-      throw AuthAppError(e.message, code: e.statusCode);
-    } on PostgrestException catch (e) {
-      throw DataAppError(e.message, code: e.code);
+      throw const AuthAppError.unexpected();
+    } on PostgrestException {
+      throw const DataAppError.creationFailed('user profile');
     } catch (e) {
-      throw NetworkAppError('Network or unexpected error during sign up: ${e.toString()}');
+      throw const NetworkAppError.noConnection();
     }
   }
 
@@ -95,46 +87,75 @@ class SupabaseDatasourceImpl implements AuthDatasource {
   Future<void> logOut() async {
     try {
       await _supabaseClient.auth.signOut();
-} on AuthException catch (e) {
-      throw AuthAppError(e.message, code: e.statusCode);
     } catch (e) {
-      throw AuthAppError('Unexpected error during logout: ${e.toString()}'); 
+      throw const AuthAppError.unexpected(message: 'An unexpected error occurred during logout.');
     }
   }
 
   @override
-  Future<bool> resendVerificationEmail(String email) async {
+  Future<void> signInWithOtp(String email) async {
     try {
-      await _supabaseClient.auth.resend(
-          type: OtpType.signup,
-          email: email,
-      );
-
-      return true;
-    } on AuthException catch (e) {
-      throw AuthAppError(e.message, code: e.statusCode);
+      await _supabaseClient.auth.signInWithOtp(email: email);
+    } on AuthException {
+      throw const AuthAppError.unexpected(message: 'Failed to send OTP.');
     } catch (e) {
-      throw AuthAppError.resendVerificationFailed(); // Más específico aquí
+      throw const NetworkAppError.noConnection();
     }
   }
 
+  @override
+  Future<UserProfile> verifyOtp(String email, String token) async {
+    try {
+      final AuthResponse res = await _supabaseClient.auth.verifyOTP(
+        type: OtpType.email,
+        email: email,
+        token: token,
+      );
+
+      final User? supabaseAuthUser = res.user;
+      if (supabaseAuthUser == null) {
+        throw const AuthAppError.unexpected(message: 'OTP verification failed: Could not get user from Supabase.');
+      }
+      return _loadUserProfile(supabaseAuthUser.id, supabaseAuthUser.email);
+    } on AuthException catch (e) {
+      if (e.message.contains('Invalid OTP') || e.message.contains('expired')) {
+        throw const AuthAppError.invalidOtp();
+      }
+      throw const AuthAppError.unexpected();
+    } catch (e) {
+      throw const NetworkAppError.noConnection();
+    }
+  }
+
+  @override
+  Future<void> saveUserPreference(UserPreferences userPreference, String userId) async {
+    try {
+      final preferencesMap = UserPreferencesMapper.toMap(userPreference);
+      preferencesMap.remove('id');
+      preferencesMap.remove('created_at');
+      preferencesMap.remove('updated_at');
+      preferencesMap['user_id'] = userId;
+
+      await _supabaseClient.from('user_preferences').upsert(preferencesMap);
+      await _supabaseClient.from('user_profiles').update({'onboarding_complete': true}).eq('id', userId);
+    } on PostgrestException {
+      throw const DataAppError.updateFailed('user preferences');
+    } catch (e) {
+      throw const NetworkAppError.noConnection();
+    }
+  }
 
   Future<UserProfile> _loadUserProfile(String userId, String? email) async {
     if (email == null) {
-      throw Exception('User email is null. Cannot load profile.');
+      throw const AuthAppError.unexpected(message: 'User email is null. Cannot load profile.');
     }
     try {
-      final response = await _supabaseClient
-          .from('user_profiles')
-          .select()
-          .eq('id', userId)
-          .single();
-
-    return UserMapper.fromJson({...response, 'email': email});
- } on PostgrestException catch (e) { 
-      throw DataAppError(e.message, code: e.code);
+      final response = await _supabaseClient.from('user_profiles').select().eq('id', userId).single();
+      return UserMapper.fromJson({...response, 'email': email});
+    } on PostgrestException {
+      throw const DataAppError.fetchFailed('user profile');
     } catch (e) {
-      throw AuthAppError('An unexpected error occurred while loading profile: ${e.toString()}');
+      throw const AuthAppError.unexpected(message: 'An unexpected error occurred while loading profile.');
     }
   }
 
@@ -146,75 +167,7 @@ class SupabaseDatasourceImpl implements AuthDatasource {
     }
     return _loadUserProfile(supabaseUser.id, supabaseUser.email);
   }
-  
-  @override
-  Future<void> saveUserPreference(UserPreferences userPreference, String userId) async {
-    try {
-      final preferencesMap = UserPreferencesMapper.toMap(userPreference);
 
 
-      preferencesMap.remove('id'); 
-      preferencesMap.remove('created_at'); 
-      preferencesMap.remove('updated_at'); 
-      
-      preferencesMap['user_id'] = userId;
-
-      await _supabaseClient.from('user_preferences').upsert(preferencesMap);
-
-      await _supabaseClient
-          .from('user_profiles')
-          .update({'onboarding_complete': true})
-          .eq('id', userId);
-
-    } on PostgrestException catch (e) {
-      // Manejo de errores específicos de la base de datos
-      throw DataAppError('Error saving user preferences: ${e.message}', code: e.code);
-    } catch (e) {
-      // Manejo de otros errores inesperados
-      throw NetworkAppError('An unexpected error occurred: ${e.toString()}');
-    }
-  }
-  
- @override
-  Future<void> signInWithOtp(String email) async {
-    try {
-      await _supabaseClient.auth.signInWithOtp(
-        email: email,
-        // Opcional: Redirige a una URL si la app no está instalada (útil para web)
-        // emailRedirectTo: 'io.supabase.flutterquickstart://login-callback/',
-      );
-    } on AuthException catch (e) {
-      throw AuthAppError(e.message, code: e.statusCode);
-    } catch (e) {
-      throw NetworkAppError('Network or unexpected error: ${e.toString()}');
-    }
-  }
-
-  @override
-  Future<UserProfile> verifyOtp(String email, String token) async {
-    try {
-      final AuthResponse res = await _supabaseClient.auth.verifyOTP(
-        type: OtpType.email, // O OtpType.sms si usas teléfono
-        email: email,
-        token: token,
-      );
-
-      final User? supabaseAuthUser = res.user;
-      if (supabaseAuthUser == null) {
-        throw AuthAppError('OTP verification failed: Could not get user from Supabase.');
-      }
-      // Una vez verificado, cargamos su perfil completo
-      return _loadUserProfile(supabaseAuthUser.id, supabaseAuthUser.email);
-
-    } on AuthException catch (e) {
-      if (e.message.contains('Invalid OTP')) {
-        throw const AuthAppError('Invalid or expired code.');
-      }
-      throw AuthAppError(e.message, code: e.statusCode);
-    } catch (e) {
-      throw NetworkAppError('Network or unexpected error: ${e.toString()}');
-    }
-  }
 }
-
 
