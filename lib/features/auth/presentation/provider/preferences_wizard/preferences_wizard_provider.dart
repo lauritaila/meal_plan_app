@@ -1,5 +1,6 @@
 // preferences_wizard_provider.dart
 
+import 'package:meal_plan_app/features/auth/presentation/provider/provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'preferences_wizard_state.dart';
 
@@ -57,5 +58,28 @@ class PreferencesWizard extends _$PreferencesWizard {
 
   void updateHouseholdSize(int size) {
     state = state.copyWith(householdSize: size);
+  }
+
+  Future<void> submitPreferences() async {
+    state = state.copyWith(formStatus: FormStatus.submitting);
+
+    try {
+      final authState = ref.read(authProvider);
+      if (authState is! AuthenticatedAuthState) {
+        throw Exception('User is not authenticated. Cannot save preferences.');
+      }
+      
+      final userId = authState.user.id;
+      final authRepository = ref.read(authRepositoryProvider);
+
+      final userPreferences = state.toUserPreferences(userId);
+
+      await authRepository.saveUserPreference(userPreferences, userId);
+      
+      state = state.copyWith(formStatus: FormStatus.success);
+
+    } catch (e) {
+      state = state.copyWith(formStatus: FormStatus.error, errorMessage: e.toString());
+    }
   }
 }

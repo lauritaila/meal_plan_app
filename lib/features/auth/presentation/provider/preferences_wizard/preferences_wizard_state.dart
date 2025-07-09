@@ -1,4 +1,6 @@
-import '../../../domain/entities/user_preferences.dart';
+import '../../../domain/domain.dart';
+
+enum FormStatus { initial, submitting, success, error }
 
 class PreferencesWizardState {
   final int step;
@@ -12,6 +14,10 @@ class PreferencesWizardState {
   final List<String> likedFoods;
   final int householdSize;
 
+  final FormStatus formStatus;
+  final String? errorMessage;
+
+
   PreferencesWizardState({
     this.step = 0,
     this.dietaryRestrictions = const [],
@@ -23,6 +29,8 @@ class PreferencesWizardState {
     this.dislikedFoods = const [],
     this.likedFoods = const [],
     this.householdSize = 1,
+    this.formStatus = FormStatus.initial,
+    this.errorMessage,
   });
 
   PreferencesWizardState copyWith({
@@ -36,6 +44,8 @@ class PreferencesWizardState {
     List<String>? dislikedFoods,
     List<String>? likedFoods,
     int? householdSize,
+    FormStatus? formStatus,
+    String? errorMessage,
   }) {
     return PreferencesWizardState(
       step: step ?? this.step,
@@ -48,6 +58,8 @@ class PreferencesWizardState {
       dislikedFoods: dislikedFoods ?? this.dislikedFoods,
       likedFoods: likedFoods ?? this.likedFoods,
       householdSize: householdSize ?? this.householdSize,
+      formStatus: formStatus ?? this.formStatus,
+      errorMessage: errorMessage ?? this.errorMessage,
     );
   }
 
@@ -65,4 +77,4 @@ class PreferencesWizardState {
       householdSize: householdSize,
     );
   }
-} 
+}
