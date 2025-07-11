@@ -10,9 +10,7 @@ class LoginScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _LoginForm(),
-    );
+    return Scaffold(body: _LoginForm());
   }
 }
 
@@ -21,9 +19,9 @@ class _LoginForm extends ConsumerWidget {
 
   void showSnackbar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -33,13 +31,16 @@ class _LoginForm extends ConsumerWidget {
     final loginFormNotifier = ref.read(loginFormProvider.notifier);
 
     ref.listen(authProvider, (previous, next) {
-      if (next is ErrorAuthState) { 
-        showSnackbar(context, next.message); 
-      } else if (next is MessageAuthState) { 
-        showSnackbar(context, next.message); 
+      if (next is ErrorAuthState) {
+        showSnackbar(context, next.message);
+      }
+      if (previous is LoadingAuthState && next is AwaitingOtpInputState) {
+        showSnackbar(
+          context,
+          'A verification code has been sent to your email.',
+        );
       }
     });
-
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 50),
@@ -47,7 +48,14 @@ class _LoginForm extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('Login', style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: colors.primary),),
+            Text(
+              'Login',
+              style: TextStyle(
+                fontSize: 30,
+                fontWeight: FontWeight.bold,
+                color: colors.primary,
+              ),
+            ),
             const SizedBox(height: 30),
             CustomTextFormField(
               label: 'Email',
@@ -62,7 +70,7 @@ class _LoginForm extends ConsumerWidget {
               width: double.infinity,
               height: 40,
               child: CustomFilledButton(
-                text: 'Send Magic Link',
+                text: 'Send Verification Code OTP',
                 buttonColor: colors.primary,
                 onPressed: loginFormState.isPosting
                     ? null

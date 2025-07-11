@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:meal_plan_app/features/shared/shared.dart'; 
+import 'package:meal_plan_app/features/shared/shared.dart';
 import '../provider/provider.dart';
 
 class SignUpScreen extends StatelessWidget {
@@ -12,9 +12,7 @@ class SignUpScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _SignUpForm(),
-    );
+    return Scaffold(body: _SignUpForm());
   }
 }
 
@@ -23,9 +21,9 @@ class _SignUpForm extends ConsumerWidget {
 
   void showSnackbar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -37,8 +35,12 @@ class _SignUpForm extends ConsumerWidget {
     ref.listen(authProvider, (previous, next) {
       if (next is ErrorAuthState) {
         showSnackbar(context, next.message);
-      } else if (next is MessageAuthState) {
-        showSnackbar(context, next.message);
+      }
+      if (previous is LoadingAuthState && next is AwaitingOtpInputState) {
+        showSnackbar(
+          context,
+          'A verification code has been sent to your email.',
+        );
       }
     });
 
