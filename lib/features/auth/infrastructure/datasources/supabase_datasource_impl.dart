@@ -22,8 +22,10 @@ class SupabaseDatasourceImpl implements AuthDatasource {
         email: email,
         password: password,
       );
+      print(res);
 
       final User? supabaseAuthUser = res.user;
+      print(supabaseAuthUser);
       if (supabaseAuthUser == null) {
         throw const AuthAppError.unexpected(message: 'Login failed: Could not get user from Supabase.');
       }
@@ -43,45 +45,23 @@ class SupabaseDatasourceImpl implements AuthDatasource {
     }
   }
 
-  @override
-  Future<UserProfile> signUp(String email, String password, String name) async {
-    try {
-      final AuthResponse res = await _supabaseClient.auth.signUp(
-        email: email,
-        password: password,
-      );
-
-      final User? supabaseAuthUser = res.user;
-      if (supabaseAuthUser == null) {
-        throw const AuthAppError.unexpected(message: 'Sign up failed: Could not get user from Supabase.');
-      }
-      
-      await _supabaseClient.from('user_profiles').insert({
-        'id': supabaseAuthUser.id,
-        'name': name,
-        'profile_data': {},
-        'onboarding_complete': false,
-      });
-
-      final freePlan = await _supabaseClient.from('subscription_plans').select('id').eq('name', 'Free').single();
-      await _supabaseClient.from('user_subscriptions').insert({
-        'user_id': supabaseAuthUser.id,
-        'plan_id': freePlan['id'],
-        'status': 'active',
-      });
-
-      return _loadUserProfile(supabaseAuthUser.id, supabaseAuthUser.email);
-    } on AuthException catch (e) {
-      if (e.message.contains('User already registered')) {
-        throw const AuthAppError.emailAlreadyInUse();
-      }
-      throw const AuthAppError.unexpected();
-    } on PostgrestException {
-      throw const DataAppError.creationFailed('user profile');
-    } catch (e) {
-      throw const NetworkAppError.noConnection();
+@override
+Future<void> signUp(String email, String password, String name) async {
+  try {
+    await _supabaseClient.auth.signUp(
+      email: email,
+      password: password,
+      data: {'full_name': name},
+    );
+  } on AuthException catch (e) {
+    if (e.message.contains('User already registered')) {
+      throw const AuthAppError.emailAlreadyInUse();
     }
+    throw const AuthAppError.unexpected();
+  } catch (e) {
+    throw const NetworkAppError.noConnection();
   }
+}
 
   @override
   Future<void> logOut() async {
@@ -156,6 +136,19 @@ class SupabaseDatasourceImpl implements AuthDatasource {
       throw const DataAppError.fetchFailed('user profile');
     } catch (e) {
       throw const AuthAppError.unexpected(message: 'An unexpected error occurred while loading profile.');
+    }
+  }
+
+  @override
+  Future<bool> userExists(String email) async {
+    try {
+      final result = await _supabaseClient.rpc(
+        'user_exists',
+        params: {'p_email': email},
+      );
+      return result as bool;
+    } catch (e) {
+      return false;
     }
   }
 

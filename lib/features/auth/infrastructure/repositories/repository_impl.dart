@@ -24,7 +24,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
   
   @override
-  Future<UserProfile> signUp(String email, String password, String name) {
+  Future<void> signUp(String email, String password, String name) {
     return datasource.signUp(email, password, name);
   }
 
@@ -55,6 +55,11 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<UserProfile> verifyOtp(String email, String token) {
     return datasource.verifyOtp(email, token);
+  }
+  
+  @override
+  Future<bool> userExists(String email) {
+    return datasource.userExists(email);
   }
 
 }
