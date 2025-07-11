@@ -78,6 +78,8 @@ class PreferencesWizard extends _$PreferencesWizard {
       
       state = state.copyWith(formStatus: FormStatus.success);
 
+      await ref.read(authProvider.notifier).refreshUserStatus();
+
     } catch (e) {
       state = state.copyWith(formStatus: FormStatus.error, errorMessage: e.toString());
     }
