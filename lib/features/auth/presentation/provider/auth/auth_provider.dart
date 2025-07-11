@@ -1,156 +1,118 @@
-// lib/features/auth/presentation/providers/auth_provider.dart
-
+import 'dart:async';
+import 'package:meal_plan_app/features/auth/presentation/provider/provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
+
 import 'package:meal_plan_app/config/config.dart';
 import 'package:meal_plan_app/features/auth/domain/domain.dart';
-import '../provider.dart';
+
 part 'auth_provider.g.dart';
 
 @riverpod
 class Auth extends _$Auth {
   late final AuthRepository _authRepository;
-  String? snackbarMessage;
+  StreamSubscription<sb.AuthState>? _authSubscription;
 
   @override
   AuthState build() {
     _authRepository = ref.watch(authRepositoryProvider);
 
-    sb.Supabase.instance.client.auth.onAuthStateChange.listen((data) {
-      final sb.AuthChangeEvent event = data.event;
-      final sb.Session? session = data.session;
+    _authSubscription?.cancel();
+    _authSubscription = sb.Supabase.instance.client.auth.onAuthStateChange
+        .listen((data) {
+          if (data.event == sb.AuthChangeEvent.signedOut) {
+            state = const UnauthenticatedAuthState();
+          }
+        });
 
-      switch (event) {
-        case sb.AuthChangeEvent.initialSession:
-        case sb.AuthChangeEvent.signedIn:
-          if (session != null) {
-            _checkAuthStatus();
-          } else {
-            state = const UnauthenticatedAuthState(); 
-          }
-          break;
-        case sb.AuthChangeEvent.signedOut:
-          state = const UnauthenticatedAuthState();
-          break;
-        case sb.AuthChangeEvent.userUpdated:
-          if (session != null) {
-            _checkAuthStatus();
-          }
-          break;
-        case sb.AuthChangeEvent.passwordRecovery:
-          showSnackbar('Se ha solicitado un restablecimiento de contraseña. Revisa tu correo.');
-          break;
-        case sb.AuthChangeEvent.tokenRefreshed:
-          break;
-        default:
-          // print('Unhandled AuthChangeEvent: $event');
-          break;
-      }
+    ref.onDispose(() {
+      _authSubscription?.cancel();
     });
 
-    _checkAuthStatus();
-    return const LoadingAuthState(); 
+    return const InitialAuthState();
   }
 
-  Future<void> _checkAuthStatus() async {
-    state = const LoadingAuthState(); 
-    try {
-      final user = await _authRepository.getAuthenticatedUserProfile();
-      state = AuthenticatedAuthState(user); 
-    } catch (e) {
-      state = const UnauthenticatedAuthState(); 
-      // showSnackbar('Error on checking auth status: $e');
-    }
+  Future<void> checkInitialStatus() async {
+    if (state is! InitialAuthState) return;
+    await refreshUserStatus(); 
   }
 
   Future<void> login(String email, String password) async {
-    state = const LoadingAuthState(); 
-    try {
-      await _authRepository.logIn(email, password);
-    } on AuthAppError catch (e) { 
-      state = ErrorAuthState(e.message);
-      showSnackbar(e.message); 
-    } on NetworkAppError catch (e) {
-      state = ErrorAuthState(e.message);
-      showSnackbar(e.message);
-    } catch (e) {
-      state = ErrorAuthState('An unexpected error occurred: ${e.toString()}');
-      showSnackbar('An unexpected error occurred: ${e.toString()}');
-    }
-  }
-
-  Future<void> signup(String email, String password, String name) async {
-    state = const LoadingAuthState(); 
-    try {
-      await _authRepository.signUp(email, password, name);
-      showSnackbar('¡Registro exitoso! Revisa tu correo para verificar tu cuenta.');
-      state = AwaitingOtpInputState(email);
-    } on AuthAppError catch (e) { 
-      state = ErrorAuthState(e.message);
-      showSnackbar(e.message); 
-    } on NetworkAppError catch (e) {
-      state = ErrorAuthState(e.message);
-      showSnackbar(e.message);
-    } catch (e) {
-      state = ErrorAuthState('An unexpected error occurred: ${e.toString()}');
-      showSnackbar('An unexpected error occurred: ${e.toString()}');
-    }
-  }
-
-  Future<void> logout() async {
-    state = const LoadingAuthState(); 
-    try {
-      await _authRepository.logOut();
-    } on AuthAppError catch (e) { 
-      state = ErrorAuthState(e.message);
-      showSnackbar(e.message); 
-    } on NetworkAppError catch (e) {
-      state = ErrorAuthState(e.message);
-      showSnackbar(e.message);
-    } catch (e) {
-      state = ErrorAuthState('An unexpected error occurred: ${e.toString()}');
-      showSnackbar('An unexpected error occurred: ${e.toString()}');
-    }
-  }
-  
-  Future<void> sendOtp(String email) async {
     state = const LoadingAuthState();
     try {
-      await _authRepository.signInWithOtp(email);
-      showSnackbar('We have sent a code to your email. Please check your inbox.');
-      state = AwaitingOtpInputState(email);
-    } on AuthAppError catch (e) {
+      final user = await _authRepository.logIn(email, password);
+      state = AuthenticatedAuthState(user);
+    } on AppError catch (e) {
       state = ErrorAuthState(e.message);
-      showSnackbar(e.message);
-    } on NetworkAppError catch (e) {
-      state = ErrorAuthState(e.message);
-      showSnackbar(e.message);
     } catch (e) {
-      state = ErrorAuthState('An unexpected error occurred: ${e.toString()}');
-      showSnackbar('An unexpected error occurred: ${e.toString()}');
+      state = const ErrorAuthState('An unexpected error occurred.');
     }
   }
-  
+
+  Future<void> signUp(String email, String password, String name) async {
+    state = const LoadingAuthState();
+    try {
+      await _authRepository.signUp(email, password, name);
+      await _authRepository.signInWithOtp(email);
+      state = AwaitingOtpInputState(email);
+    } on AppError catch (e) {
+      state = ErrorAuthState(e.message);
+    } catch (e) {
+      state = const ErrorAuthState(
+        'An unexpected error occurred during sign up.',
+      );
+    }
+  }
+
+Future<void> sendOtp(String email) async {
+    state = const LoadingAuthState();
+    try {
+      final exists = await _authRepository.userExists(email);
+      if (!exists) {
+        throw const AuthAppError.userNotFound();
+      }
+      await _authRepository.signInWithOtp(email);
+      state = AwaitingOtpInputState(email);
+    } on AppError catch (e) {
+      state = ErrorAuthState(e.message);
+    } catch (e) {
+      state = const ErrorAuthState('Failed to send OTP. Please try again.');
+    }
+  }
+
+  void cancelOtpFlow() {
+    state = const UnauthenticatedAuthState();
+  }
+
   Future<void> verifyOtp(String email, String token) async {
     state = const LoadingAuthState();
     try {
-      await _authRepository.verifyOtp(email, token);
-    } on AuthAppError catch (e) {
+      final userProfile = await _authRepository.verifyOtp(email, token);
+      state = AuthenticatedAuthState(userProfile);
+    } on AppError catch (e) {
+      state = ErrorAuthState(e.message);
+      state = ErrorAuthState(e.message);
       state = AwaitingOtpInputState(email);
-      showSnackbar(e.message);
-    } on NetworkAppError catch (e) {
-      state = AwaitingOtpInputState(email);
-      showSnackbar(e.message);
     } catch (e) {
-      state = AwaitingOtpInputState(email);
-      showSnackbar('An unexpected error occurred: ${e.toString()}');
+      state = const ErrorAuthState('An unexpected error occurred.');
     }
   }
 
-  void showSnackbar(String message) {
-    snackbarMessage = message;
-    Future.delayed(const Duration(milliseconds: 100), () {
-      state = MessageAuthState(message); 
-    });
+  Future<void> logOut() async {
+    try {
+      await _authRepository.logOut();
+      state = const UnauthenticatedAuthState();
+    } on AppError catch (e) {
+      state = ErrorAuthState(e.message);
+    }
+  }
+
+    Future<void> refreshUserStatus() async {
+    try {
+      final user = await _authRepository.getAuthenticatedUserProfile();
+      state = AuthenticatedAuthState(user);
+    } catch (_) {
+      state = const UnauthenticatedAuthState();
+    }
   }
 }
