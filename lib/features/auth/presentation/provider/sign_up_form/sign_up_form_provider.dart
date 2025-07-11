@@ -3,22 +3,23 @@
 import 'package:formz/formz.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:meal_plan_app/features/shared/shared.dart';
+import 'package:uuid/uuid.dart';
 
-import '../provider.dart'; 
+import '../provider.dart';
 part 'sign_up_form_provider.g.dart';
 
 class SignupFormState {
   final bool isPosting;
   final bool isFormPosted;
   final bool isValid;
-  final Name name; 
+  final Name name;
   final Email email;
 
   SignupFormState({
     this.isPosting = false,
     this.isFormPosted = false,
     this.isValid = false,
-    this.name = const Name.pure(), 
+    this.name = const Name.pure(),
     this.email = const Email.pure(),
   });
 
@@ -28,14 +29,13 @@ class SignupFormState {
     bool? isValid,
     Name? name,
     Email? email,
-  }) =>
-      SignupFormState(
-        isPosting: isPosting ?? this.isPosting,
-        isFormPosted: isFormPosted ?? this.isFormPosted,
-        isValid: isValid ?? this.isValid,
-        name: name ?? this.name,
-        email: email ?? this.email,
-      );
+  }) => SignupFormState(
+    isPosting: isPosting ?? this.isPosting,
+    isFormPosted: isFormPosted ?? this.isFormPosted,
+    isValid: isValid ?? this.isValid,
+    name: name ?? this.name,
+    email: email ?? this.email,
+  );
 
   @override
   String toString() {
@@ -79,17 +79,10 @@ class SignupForm extends _$SignupForm {
     if (!state.isValid) {
       return;
     }
-
-    state = state.copyWith(isPosting: true); 
-    try {
-      await ref.read(authProvider.notifier).sendOtp(
-        state.email.value,
-      );
-    } catch (e) {
-      ref.read(authProvider.notifier).showSnackbar(e.toString());
-    } finally {
-      state = state.copyWith(isPosting: false); 
-    }
+    final randomPassword = const Uuid().v4();
+    await ref
+        .read(authProvider.notifier)
+        .signUp(state.email.value, randomPassword, state.name.value);
   }
 
   void _touchEveryField() {
@@ -97,7 +90,7 @@ class SignupForm extends _$SignupForm {
     final email = Email.dirty(state.email.value);
 
     state = state.copyWith(
-      isFormPosted: true, 
+      isFormPosted: true,
       name: name,
       email: email,
       isValid: Formz.validate([name, email]),
