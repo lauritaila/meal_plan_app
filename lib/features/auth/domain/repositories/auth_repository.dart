@@ -10,4 +10,5 @@ abstract class AuthRepository {
   Future<UserProfile> verifyOtp(String email, String token);
   Future<void> saveUserPreference(UserPreferences userPreference, String userId);
   Future<bool> userExists(String email);
+  Future<void> signInWithGoogle();
 }

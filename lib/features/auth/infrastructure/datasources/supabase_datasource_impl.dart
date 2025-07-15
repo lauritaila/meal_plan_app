@@ -1,6 +1,7 @@
 import 'package:meal_plan_app/config/config.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../domain/domain.dart';
 import '../infrastructure.dart';
 
@@ -22,10 +23,8 @@ class SupabaseDatasourceImpl implements AuthDatasource {
         email: email,
         password: password,
       );
-      print(res);
 
       final User? supabaseAuthUser = res.user;
-      print(supabaseAuthUser);
       if (supabaseAuthUser == null) {
         throw const AuthAppError.unexpected(message: 'Login failed: Could not get user from Supabase.');
       }
@@ -161,6 +160,33 @@ Future<void> signUp(String email, String password, String name) async {
     return _loadUserProfile(supabaseUser.id, supabaseUser.email);
   }
 
+ @override
+  Future<void> signInWithGoogle() async {
+    try {
+      final webClientId = Enviroment.webClientId;
+      final googleSignIn = GoogleSignIn.instance;
+      await googleSignIn.initialize(
+        serverClientId: webClientId,
+      );
 
+      final googleUser = await googleSignIn.authenticate();
+
+      final googleAuth =  googleUser.authentication;
+    
+      final idToken = googleAuth.idToken;
+      if (idToken == null) {
+        throw const AuthAppError.unexpected(message: 'No ID Token found.');
+      }
+      await _supabaseClient.auth.signInWithIdToken(
+        provider: OAuthProvider.google,
+        idToken: idToken,
+      );
+
+    } on AuthException catch (e) {
+      throw AuthAppError(e.message, code: e.statusCode);
+    } catch (e) {
+      throw AuthAppError.unexpected(message: e.toString());
+    }
+  }
 }
 

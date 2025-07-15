@@ -57,6 +57,21 @@ class _LoginForm extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 30),
+ElevatedButton.icon(
+  icon: Icon(Icons.usb_rounded), 
+  label: const Text('Sign in with Google'),
+  onPressed: () {
+    ref.read(authProvider.notifier).signInWithGoogle();
+  },
+  style: ElevatedButton.styleFrom(
+    foregroundColor: Colors.black, backgroundColor: Colors.white,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(8.0),
+      side: const BorderSide(color: Colors.grey),
+    ),
+  ),
+),
+            const SizedBox(height: 16),
             CustomTextFormField(
               label: 'Email',
               keyboardType: TextInputType.emailAddress,
